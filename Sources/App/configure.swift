@@ -1,22 +1,40 @@
 import Fluent
 import FluentPostgresDriver
+import FluentSQLiteDriver
 import Vapor
 
 // configures your application
 public func configure(_ app: Application) throws {
-    // uncomment to serve files from /Public folder
-    // app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    // Configure DB
+    if app.environment == .production {
+        app.databases.use(.postgres(
+            hostname: Environment.get("DATABASE_HOST") ?? "localhost",
+            port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? PostgresConfiguration.ianaPortNumber,
+            username: Environment.get("DATABASE_USERNAME") ?? "vapor_username",
+            password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
+            database: Environment.get("DATABASE_NAME") ?? "vapor_database"
+        ), as: .psql)
+    } else {
+        app.databases.use(.sqlite(.file("db.sqlite")), as: .sqlite)
+    }
+    
+    // Server configuration
+    app.http.server.configuration.hostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
+    app.http.server.configuration.port = 2564
 
-    app.databases.use(.postgres(
-        hostname: Environment.get("DATABASE_HOST") ?? "localhost",
-        port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? PostgresConfiguration.ianaPortNumber,
-        username: Environment.get("DATABASE_USERNAME") ?? "vapor_username",
-        password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
-        database: Environment.get("DATABASE_NAME") ?? "vapor_database"
-    ), as: .psql)
-
-    app.migrations.add(CreateTodo())
-
+    // Migrations
+    app.migrations.add(EnumerationsMigration())
+    app.migrations.add(AddressMigration())
+    app.migrations.add(ClientMigration())
+    app.migrations.add(EstimateMigration())
+    app.migrations.add(InvoiceMigration())
+    app.migrations.add(MonthRevenueMigration())
+    app.migrations.add(PayementMethodMigration())
+    app.migrations.add(ProductMigration())
+    app.migrations.add(StaffMigration())
+    app.migrations.add(YearRevenueMigration())
+    app.migrations.add(SiblingsMigration())
+    
     // register routes
     try routes(app)
 }
