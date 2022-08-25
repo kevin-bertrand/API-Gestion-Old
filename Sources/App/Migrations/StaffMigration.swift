@@ -24,7 +24,7 @@ struct StaffMigration: AsyncMigration {
             .field("position", position, .required)
             .field("role", .string, .required)
             .field("password_hash", .string, .required)
-            .field("address", .uuid, .required, .references(Address.schema, "id"))
+            .field("address_id", .uuid, .required, .references(Address.schema, "id"))
             .unique(on: "email")
             .create()
     }

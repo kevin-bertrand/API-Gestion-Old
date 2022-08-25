@@ -20,7 +20,7 @@ public func configure(_ app: Application) throws {
     
     // Server configuration
     app.http.server.configuration.hostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
-    app.http.server.configuration.port = 2564
+    app.http.server.configuration.port = 2574
 
     // Migrations
     app.migrations.add(EnumerationsMigration())
@@ -35,6 +35,9 @@ public func configure(_ app: Application) throws {
     app.migrations.add(UserTokenMigration())
     app.migrations.add(YearRevenueMigration())
     app.migrations.add(SiblingsMigration())
+    
+    // Add default administrator user
+    app.migrations.add(DefaultAdministratorMigration())
     
     // register routes
     try routes(app)
