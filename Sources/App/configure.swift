@@ -32,6 +32,7 @@ public func configure(_ app: Application) throws {
     app.migrations.add(PayementMethodMigration())
     app.migrations.add(ProductMigration())
     app.migrations.add(StaffMigration())
+    app.migrations.add(UserTokenMigration())
     app.migrations.add(YearRevenueMigration())
     app.migrations.add(SiblingsMigration())
     
