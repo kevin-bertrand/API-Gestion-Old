@@ -38,6 +38,9 @@ final class Staff: Model, Content {
     @Field(key: "role")
     var role: String
     
+    @Field(key: "password_hash")
+    var passwordHash: String
+    
     @Parent(key: "address_id")
     var address: Address
     
@@ -52,6 +55,7 @@ final class Staff: Model, Content {
          gender: Gender = .notDetermined,
          position: Position,
          role: String,
+         passwordHash: String,
          addressID: Address.IDValue) {
         self.id = id
         self.firstname = firstname
@@ -61,6 +65,7 @@ final class Staff: Model, Content {
         self.gender = gender
         self.position = position
         self.role = role
+        self.passwordHash = passwordHash
         self.$address.id = addressID
     }
 }
