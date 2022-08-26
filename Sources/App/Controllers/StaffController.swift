@@ -23,6 +23,7 @@ struct StaffController: RouteCollection {
         tokenGroup.post("add", use: create)
         tokenGroup.delete(":id", use: delete)
         tokenGroup.get(use: getList)
+        tokenGroup.get(":id", use: getStaffInfo)
     }
     
     // MARK: Routes functions
@@ -32,7 +33,7 @@ struct StaffController: RouteCollection {
         
         let token = try await generateToken(for: userAuth, in: req)
         
-        let staffInformations = Staff.Login(firstname: userAuth.firstname,
+        let staffInformations = Staff.Connected(firstname: userAuth.firstname,
                                             lastname: userAuth.lastname,
                                             phone: userAuth.phone,
                                             email: userAuth.email,
@@ -101,6 +102,22 @@ struct StaffController: RouteCollection {
             .all()
         
         return formatResponse(status: .ok, body: try encodeBody(staff))
+    }
+    
+    /// Get one staff info
+    private func getStaffInfo(req: Request) async throws -> Response {
+        let userAuth = try getUserAuthFor(req)
+        let staffId = req.parameters.get("id")
+        
+        guard let staffId = staffId,
+              let id = UUID(uuidString: staffId),
+              let staff = try await Staff.find(id, on: req.db) else {
+            throw Abort(.notAcceptable)
+        }
+        
+        let staffInformations = Staff.Information(firstname: staff.firstname, lastname: staff.lastname, phone: staff.phone, email: staff.email, gender: staff.gender, position: staff.position, role: staff.role, permissions: staff.permissions, address: try await addressController.getAddressFromId(staff.$address.id, for: req))
+        
+        return formatResponse(status: .ok, body: try encodeBody(staffInformations))
     }
     
     // MARK: Utilities functions
