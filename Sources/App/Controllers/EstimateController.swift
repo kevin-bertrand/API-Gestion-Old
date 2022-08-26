@@ -31,47 +31,28 @@ struct EstimateController: RouteCollection {
         let estimates = try await Estimate.query(on: req.db)
             .all()
         
-        let currentDate = Date()
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy"
-        let yearString = dateFormatter.string(from: currentDate)
-        dateFormatter.dateFormat = "MM"
-        let monthString = dateFormatter.string(from: currentDate)
-        let date = yearString + monthString
+        dateFormatter.dateFormat = "yyyyMM"
+        let date = dateFormatter.string(from: Date())
         
-        var number: String = ""
+        var number: String = "001"
         
-        if estimates.count == 0 {
-            number = "001"
-        } else {
+        if estimates.count != 0 {
             let lastReference = estimates[estimates.count-1].reference.split(separator: "-")
-            print(lastReference)
-            
             guard lastReference.count == 3 else { throw Abort(.internalServerError) }
             
-            if lastReference[1] != date {
-                number = "001"
-            } else {
-                guard let lastNumber = Int(lastReference[2]) else {
-                    print("error here")
-                    throw Abort(.internalServerError)
-                }
+            if lastReference[1] == date {
+                guard let lastNumber = Int(lastReference[2]) else { throw Abort(.internalServerError) }
                 let newNumber = "\(lastNumber+1)"
+                number = ""
                 
-                for _ in 0..<(3-newNumber.count) {
-                    number.append("0")
-                }
+                for _ in 0..<(3-newNumber.count) { number.append("0") }
                 
                 number.append(newNumber)
             }
         }
-        
-        var reference: String = "D-"
-        reference.append(date)
-        reference.append("-")
-        reference.append(number)
-        
-        return formatResponse(status: .ok, body: try encodeBody(reference))
+            
+        return formatResponse(status: .ok, body: try encodeBody("D-\(date)-\(number)"))
     }
     
     /// Create
