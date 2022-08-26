@@ -22,6 +22,7 @@ struct StaffController: RouteCollection {
         let tokenGroup = staffGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.post("add", use: create)
         tokenGroup.delete(":id", use: delete)
+        tokenGroup.get(use: getList)
     }
     
     // MARK: Routes functions
@@ -90,6 +91,16 @@ struct StaffController: RouteCollection {
         try await staffToDelete.delete(on: req.db)
         
         return formatResponse(status: .ok, body: .empty)
+    }
+    
+    /// Get staff list
+    private func getList(req: Request) async throws -> Response {
+        _ = try getUserAuthFor(req)
+        
+        let staff = try await Staff.query(on: req.db)
+            .all()
+        
+        return formatResponse(status: .ok, body: try encodeBody(staff))
     }
     
     // MARK: Utilities functions
