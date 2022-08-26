@@ -5,4 +5,5 @@ func routes(_ app: Application) throws {
     let addressController = AddressController()
     
     try app.register(collection: StaffController(addressController: addressController))
+    try app.register(collection: ProductController())
 }
