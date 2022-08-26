@@ -19,6 +19,7 @@ struct ClientController: RouteCollection {
         let tokenGroup = clientGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.post("add", use: create)
         tokenGroup.patch(":id", use: update)
+        tokenGroup.get(use: getList)
     }
     
     // MARK: Routes functions
@@ -75,6 +76,14 @@ struct ClientController: RouteCollection {
             .update()
         
         return formatResponse(status: .ok, body: .empty)
+    }
+    
+    /// Get client list
+    private func getList(req: Request) async throws -> Response {
+        let clients = try await Client.query(on: req.db)
+            .all()
+        
+        return formatResponse(status: .ok, body: try encodeBody(clients))
     }
     
     // MARK: Utilities functions
