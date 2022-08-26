@@ -39,10 +39,27 @@ extension Estimate {
     }
     
     struct Summary: Codable {
+        let id: UUID?
         let client: Client.Summary
         let reference: String
         let grandTotal: Double
         let status: EstimateStatus
         let limitValidifyDate: Date
+    }
+    
+    struct Informations: Codable {
+        let id: UUID
+        let reference: String
+        let internalReference: String
+        let object: String
+        let totalServices: Double
+        let totalMaterials: Double
+        let total: Double
+        let reduction: Double
+        let grandTotal: Double
+        let status: EstimateStatus
+        let limitValidityDate: Date
+        let client: Client.Informations
+        let products: [Product.Informations]
     }
 }

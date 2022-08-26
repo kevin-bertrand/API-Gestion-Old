@@ -18,4 +18,13 @@ extension Product {
         let productID: UUID
         let quantity: Double
     }
+    
+    struct Informations: Codable {
+        let quantity: Double
+        let title: String
+        let unity: String?
+        let domain: Domain
+        let productCategory: ProductCategory
+        let price: Double
+    }
 }

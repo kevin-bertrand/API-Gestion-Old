@@ -8,5 +8,5 @@ func routes(_ app: Application) throws {
     try app.register(collection: ProductController())
     try app.register(collection: ClientController(addressController: addressController))
     try app.register(collection: PaymentController())
-    try app.register(collection: EstimateController())
+    try app.register(collection: EstimateController(addressController: addressController))
 }

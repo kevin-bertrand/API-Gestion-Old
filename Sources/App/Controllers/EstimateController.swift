@@ -9,6 +9,9 @@ import Fluent
 import Vapor
 
 struct EstimateController: RouteCollection {
+    // MARK: Properties
+    var addressController: AddressController
+    
     // MARK: Route initialisation
     func boot(routes: RoutesBuilder) throws {
         let estimateGroup = routes.grouped("estimate")
@@ -17,6 +20,7 @@ struct EstimateController: RouteCollection {
         tokenGroup.get("reference", use: getEstimateReference)
         tokenGroup.get("list", use: getList)
         tokenGroup.get("list", ":filter", use: getList)
+        tokenGroup.get(":id", use: getEstimate)
         tokenGroup.post("add", use: create)
         tokenGroup.patch(use: update)
     }
@@ -226,6 +230,55 @@ struct EstimateController: RouteCollection {
         return formatResponse(status: .ok, body: try encodeBody(estimates))
     }
     
+    /// Get estimate
+    private func getEstimate(req: Request) async throws -> Response {
+        let id = req.parameters.get("id", as: UUID.self)
+        
+        guard let id = id,
+              let estimate = try await Estimate.find(id, on: req.db),
+              let client = try await Client.find(estimate.$client.id, on: req.db) else {
+            throw Abort(.notAcceptable)
+        }
+        
+        let productEstimates = try await ProductEstimate.query(on: req.db).filter(\.$estimate.$id == id).all()
+        var products: [Product.Informations] = []
+        
+        for productEstimate in productEstimates {
+            guard let product = try await Product.find(productEstimate.$product.id, on: req.db) else { throw Abort(.notAcceptable) }
+            products.append(Product.Informations(quantity: productEstimate.quantity,
+                                                 title: product.title,
+                                                 unity: product.unity,
+                                                 domain: product.domain,
+                                                 productCategory: product.productCategory,
+                                                 price: product.price))
+        }
+        
+        let estimateInformations = Estimate.Informations(id: id,
+                                                         reference: estimate.reference,
+                                                         internalReference: estimate.internalReference,
+                                                         object: estimate.object,
+                                                         totalServices: estimate.totalServices,
+                                                         totalMaterials: estimate.totalMaterials,
+                                                         total: estimate.total,
+                                                         reduction: estimate.reduction,
+                                                         grandTotal: estimate.grandTotal,
+                                                         status: estimate.status,
+                                                         limitValidityDate: estimate.limitValidityDate,
+                                                         client: Client.Informations(firstname: client.firstname,
+                                                                                     lastname: client.lastname,
+                                                                                     company: client.company,
+                                                                                     phone: client.phone,
+                                                                                     email: client.email,
+                                                                                     personType: client.personType,
+                                                                                     gender: client.gender,
+                                                                                     siret: client.siret,
+                                                                                     tva: client.tva,
+                                                                                     address: try await addressController.getAddressFromId(client.$address.id, for: req)),
+                                                         products: products)
+        
+        return formatResponse(status: .ok, body: try encodeBody(estimateInformations))
+    }
+    
     // MARK: Utilities functions
     /// Getting the connected user
     private func getUserAuthFor(_ req: Request) throws -> Staff {
@@ -255,7 +308,8 @@ struct EstimateController: RouteCollection {
         
         for estimate in estimates {
             if let client = estimate.$client.value {
-                estimateSummary.append(Estimate.Summary(client: Client.Summary(firstname: client.firstname,
+                estimateSummary.append(Estimate.Summary(id: estimate.id,
+                                                        client: Client.Summary(firstname: client.firstname,
                                                                                lastname: client.lastname,
                                                                                company: client.company),
                                                  reference: estimate.reference,
