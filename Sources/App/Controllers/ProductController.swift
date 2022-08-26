@@ -15,6 +15,7 @@ struct ProductController: RouteCollection {
                 
         let tokenGroup = productGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.post("add", use: create)
+        tokenGroup.patch(":id", use: update)
     }
     
     // MARK: Routes functions
@@ -35,9 +36,28 @@ struct ProductController: RouteCollection {
         
         return formatResponse(status: .created, body: .empty)
     }
-    
-    
+        
     /// Update product
+    private func update(req: Request) async throws -> Response {
+        let userAuth = try getUserAuthFor(req)
+        let updatedProduct = try req.content.decode(Product.self)
+        let productId = req.parameters.get("id")
+        
+        guard userAuth.permissions == .admin, let productId = productId, let id = UUID(uuidString: productId) else {
+            throw Abort(.unauthorized)
+        }
+        
+        try await Product.query(on: req.db)
+            .set(\.$productCategory, to: updatedProduct.productCategory)
+            .set(\.$domain, to: updatedProduct.domain)
+            .set(\.$title, to: updatedProduct.title)
+            .set(\.$unity, to: updatedProduct.unity)
+            .set(\.$price, to: updatedProduct.price)
+            .filter(\.$id == id)
+            .update()
+        
+        return formatResponse(status: .ok, body: .empty)
+    }
     
     /// Get product list
     
