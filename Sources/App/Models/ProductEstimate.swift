@@ -17,6 +17,9 @@ final class ProductEstimate: Model, Content {
     var id: UUID?
     
     // Fields
+    @Field(key: "quantity")
+    var quantity: Double
+    
     @Parent(key: "product_id")
     var product: Product
     
@@ -26,9 +29,10 @@ final class ProductEstimate: Model, Content {
     // Initialization functions
     init() {}
     
-    init(id: UUID? = nil, product: Product, estimate: Estimate) throws {
+    init(id: UUID? = nil, quantity: Double, productID: UUID, estimateID: UUID) throws {
         self.id = id
-        self.$product.id = try product.requireID()
-        self.$estimate.id = try estimate.requireID()
+        self.quantity = quantity
+        self.$product.id = productID
+        self.$estimate.id = estimateID
     }
 }

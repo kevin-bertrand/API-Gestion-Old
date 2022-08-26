@@ -17,6 +17,9 @@ final class ProductInvoice: Model, Content {
     var id: UUID?
     
     // Fields
+    @Field(key: "quantity")
+    var quantity: Double
+    
     @Parent(key: "product_id")
     var product: Product
     
@@ -26,8 +29,9 @@ final class ProductInvoice: Model, Content {
     // Initialization functions
     init() {}
     
-    init(id: UUID? = nil, product: Product, invoice: Invoice) throws {
+    init(id: UUID? = nil, quantity: Double, product: Product, invoice: Invoice) throws {
         self.id = id
+        self.quantity = quantity
         self.$product.id = try product.requireID()
         self.$invoice.id = try invoice.requireID()
     }

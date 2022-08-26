@@ -13,12 +13,14 @@ struct SiblingsMigration: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database.schema(ProductEstimate.schema)
             .id()
+            .field("quantity", .double, .required)
             .field("product_id", .uuid, .required, .references(Product.schema, "id"))
             .field("estimate_id", .uuid, .required, .references(Estimate.schema, "id"))
             .create()
         
         try await database.schema(ProductInvoice.schema)
             .id()
+            .field("quantity", .double, .required)
             .field("product_id", .uuid, .required, .references(Product.schema, "id"))
             .field("invoice_id", .uuid, .required, .references(Invoice.schema, "id"))
             .create()

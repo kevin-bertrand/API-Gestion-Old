@@ -64,7 +64,7 @@ final class Estimate: Model, Content {
          reduction: Double,
          grandTotal: Double,
          status: EstimateStatus,
-         limitValidityDate: Date = Date().addingTimeInterval(2592000),
+         limitValidityDate: Date?,
          clientID: Client.IDValue) {
         self.id = id
         self.reference = reference
@@ -74,7 +74,7 @@ final class Estimate: Model, Content {
         self.reduction = reduction
         self.grandTotal = grandTotal
         self.status = status
-        self.limitValidityDate = limitValidityDate
+        self.limitValidityDate = limitValidityDate ?? Date().addingTimeInterval(2592000)
         self.$client.id = clientID
     }
 }
