@@ -57,7 +57,7 @@ final class Client: Model, Content {
          phone: String,
          email: String,
          personType: PersonType,
-         gender: Gender = .notDetermined,
+         gender: Gender? = .notDetermined,
          siret: String? = nil,
          tva: String? = nil,
          addressID: Address.IDValue) {
@@ -68,7 +68,7 @@ final class Client: Model, Content {
         self.phone = phone
         self.email = email
         self.personType = personType
-        self.gender = personType == .company ? .notDetermined : gender
+        self.gender = (personType == .company ? .notDetermined : gender) ?? .notDetermined
         self.siret = siret
         self.tva = tva
         self.$address.id = addressID
