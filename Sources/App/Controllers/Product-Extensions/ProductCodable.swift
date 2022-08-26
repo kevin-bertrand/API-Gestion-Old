@@ -8,7 +8,13 @@
 import Foundation
 
 extension Product {
-    struct Create: Codable {
+    struct CreateEstimate: Codable {
+        let productID: UUID
+        let quantity: Double
+    }
+    
+    struct UpdateEstimate: Codable {
+        let productEstimateID: UUID?
         let productID: UUID
         let quantity: Double
     }

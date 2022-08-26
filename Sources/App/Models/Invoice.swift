@@ -20,6 +20,12 @@ final class Invoice: Model, Content {
     @Field(key: "reference")
     var reference: String
     
+    @Field(key: "internal_reference")
+    var internalReference: String
+    
+    @Field(key: "object")
+    var object: String
+    
     @Field(key: "total_services")
     var totalServices: Double
     
@@ -58,6 +64,8 @@ final class Invoice: Model, Content {
     
     init(id: UUID? = nil,
          reference: String,
+         internalReference: String,
+         object: String,
          totalServices: Double,
          totalMaterials: Double,
          total: Double,
@@ -67,6 +75,8 @@ final class Invoice: Model, Content {
          limitPayementDate: Date = Date().addingTimeInterval(2592000),
          clientID: Client.IDValue) {
         self.id = id
+        self.internalReference = internalReference
+        self.object = object
         self.reference = reference
         self.totalServices = totalServices
         self.totalMaterials = totalMaterials

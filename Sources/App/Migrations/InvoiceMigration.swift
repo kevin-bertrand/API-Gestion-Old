@@ -16,6 +16,8 @@ struct InvoiceMigration: AsyncMigration {
         try await database.schema(Invoice.schema)
             .id()
             .field("reference", .string, .required)
+            .field("internal_reference", .string, .required)
+            .field("object", .string, .required)
             .field("total_services", .double, .required)
             .field("total_materials", .double, .required)
             .field("total", .double, .required)

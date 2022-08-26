@@ -10,6 +10,8 @@ import Foundation
 extension Estimate {
     struct Create: Codable {
         let reference: String
+        let internalReference: String
+        let object: String
         let totalServices: Double
         let totalMaterials: Double
         let total: Double
@@ -18,6 +20,21 @@ extension Estimate {
         let status: EstimateStatus
         let limitValidifyDate: Date?
         let clientID: UUID
-        let products: [Product.Create]
+        let products: [Product.CreateEstimate]
+    }
+    
+    struct Update: Codable {
+        let id: UUID
+        let reference: String
+        let internalReference: String
+        let object: String
+        let totalServices: Double
+        let totalMaterials: Double
+        let total: Double
+        let reduction: Double
+        let grandTotal: Double
+        let status: EstimateStatus
+        let limitValidifyDate: Date?
+        let products: [Product.UpdateEstimate]
     }
 }

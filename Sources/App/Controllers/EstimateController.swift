@@ -16,6 +16,7 @@ struct EstimateController: RouteCollection {
         let tokenGroup = estimateGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getEstimateReference)
         tokenGroup.post("add", use: create)
+        tokenGroup.patch(use: update)
     }
     
     // MARK: Routes functions
@@ -71,7 +72,7 @@ struct EstimateController: RouteCollection {
     private func create(req: Request) async throws -> Response {
         let newEstimate = try req.content.decode(Estimate.Create.self)
         
-        try await Estimate(reference: newEstimate.reference, totalServices: newEstimate.totalServices, totalMaterials: newEstimate.totalMaterials, total: newEstimate.total, reduction: newEstimate.reduction, grandTotal: newEstimate.grandTotal, status: newEstimate.status, limitValidityDate: newEstimate.limitValidifyDate ?? nil, clientID: newEstimate.clientID).save(on: req.db)
+        try await Estimate(reference: newEstimate.reference, internalReference: newEstimate.internalReference, object: newEstimate.object, totalServices: newEstimate.totalServices, totalMaterials: newEstimate.totalMaterials, total: newEstimate.total, reduction: newEstimate.reduction, grandTotal: newEstimate.grandTotal, status: newEstimate.status, limitValidityDate: newEstimate.limitValidifyDate ?? nil, clientID: newEstimate.clientID).save(on: req.db)
         
         let estimate = try await Estimate.query(on: req.db)
             .filter(\.$reference == newEstimate.reference)
@@ -89,7 +90,48 @@ struct EstimateController: RouteCollection {
     }
     
     /// Update lines
-    /// Update status
+    private func update(req: Request) async throws -> Response {
+        let updateEstimate = try req.content.decode(Estimate.Update.self)
+        
+        try await Estimate.query(on: req.db)
+            .set(\.$object, to: updateEstimate.object)
+            .set(\.$totalServices, to: updateEstimate.totalServices)
+            .set(\.$totalMaterials, to: updateEstimate.totalMaterials)
+            .set(\.$total, to: updateEstimate.total)
+            .set(\.$reduction, to: updateEstimate.reduction)
+            .set(\.$grandTotal, to: updateEstimate.grandTotal)
+            .set(\.$status, to: updateEstimate.status)
+            .set(\.$limitValidityDate, to: updateEstimate.limitValidifyDate ?? Date().addingTimeInterval(2592000))
+            .filter(\.$reference == updateEstimate.reference)
+            .update()
+        
+        for product in updateEstimate.products {
+            if product.quantity == 0 {
+                try await ProductEstimate.query(on: req.db)
+                    .filter(\.$product.$id == product.productID)
+                    .filter(\.$estimate.$id == updateEstimate.id)
+                    .delete()
+            } else {
+                let firstMatch = try await ProductEstimate.query(on: req.db)
+                    .filter(\.$product.$id == product.productID)
+                    .filter(\.$estimate.$id == updateEstimate.id)
+                    .first()
+                
+                if firstMatch != nil {
+                    try await ProductEstimate.query(on: req.db)
+                        .set(\.$quantity, to: product.quantity)
+                        .filter(\.$product.$id == product.productID)
+                        .filter(\.$estimate.$id == updateEstimate.id)
+                        .update()
+                } else {
+                    try await ProductEstimate(quantity: product.quantity, productID: product.productID, estimateID: updateEstimate.id).save(on: req.db)
+                }
+            }
+        }
+        
+        return formatResponse(status: .ok, body: .empty)
+    }
+    
     /// Export as invoice
     
     // MARK: Utilities functions
