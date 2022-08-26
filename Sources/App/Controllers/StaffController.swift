@@ -21,6 +21,7 @@ struct StaffController: RouteCollection {
         
         let tokenGroup = staffGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.post("add", use: create)
+        tokenGroup.delete(":id", use: delete)
     }
     
     // MARK: Routes functions
@@ -68,6 +69,27 @@ struct StaffController: RouteCollection {
             .save(on: req.db)
         
         return formatResponse(status: .created, body: .empty)
+    }
+    
+    /// Delete user
+    private func delete(req: Request) async throws -> Response {
+        let userAuth = try getUserAuthFor(req)
+        let idToDelete = req.parameters.get("id")
+        
+        guard userAuth.permissions == .admin else {
+            throw Abort(.unauthorized)
+        }
+        
+        guard let idToDelete = idToDelete,
+              let id = UUID(uuidString: idToDelete),
+              userAuth.id != id,
+              let staffToDelete = try await Staff.find(id, on: req.db) else {
+            throw Abort(.notAcceptable)
+        }
+        
+        try await staffToDelete.delete(on: req.db)
+        
+        return formatResponse(status: .ok, body: .empty)
     }
     
     // MARK: Utilities functions
