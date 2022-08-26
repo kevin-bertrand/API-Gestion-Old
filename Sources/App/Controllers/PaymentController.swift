@@ -15,6 +15,7 @@ struct PaymentController: RouteCollection {
                 
         let tokenGroup = paymentGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.post("add", use: create)
+        tokenGroup.patch(":id", use: update)
     }
     
     // MARK: Routes functions
@@ -33,6 +34,28 @@ struct PaymentController: RouteCollection {
     }
     
     /// Update
+    private func update(req: Request) async throws -> Response {
+        let userAuth = try getUserAuthFor(req)
+        let updateMethod = try req.content.decode(PayementMethod.self)
+        let paymentID = req.parameters.get("id", as: UUID.self)
+        
+        guard userAuth.permissions == .admin else {
+            throw Abort(.unauthorized)
+        }
+        
+        guard let paymentID = paymentID else {
+            throw Abort(.notAcceptable)
+        }
+        
+        try await PayementMethod.query(on: req.db)
+            .set(\.$title, to: updateMethod.title)
+            .set(\.$iban, to: updateMethod.iban)
+            .set(\.$bic, to: updateMethod.bic)
+            .filter(\.$id == paymentID)
+            .update()
+        
+        return formatResponse(status: .ok, body: .empty)
+    }
     
     /// Delete
     
