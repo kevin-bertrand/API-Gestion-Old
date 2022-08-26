@@ -18,12 +18,24 @@ struct ProductController: RouteCollection {
         tokenGroup.patch(":id", use: update)
         tokenGroup.get(use: getList)
         tokenGroup.get(":params", use: getList)
+        tokenGroup.get("categories", use: getCategories)
+        tokenGroup.get("domains", use: getDomains)
     }
     
     // MARK: Routes functions
     /// Get product categories
+    private func getCategories(req: Request) async throws -> Response {
+        let categories = ProductCategory.allCases
+        
+        return formatResponse(status: .ok, body: try encodeBody(categories))
+    }
     
     /// Get domains
+    private func getDomains(req: Request) async throws -> Response {
+        let domains = Domain.allCases
+        
+        return formatResponse(status: .ok, body: try encodeBody(domains))
+    }
     
     /// Create product
     private func create(req: Request) async throws -> Response {
@@ -83,7 +95,7 @@ struct ProductController: RouteCollection {
                         } else {
                             throw Abort(.notAcceptable)
                         }
-                    case "productCategory":
+                    case "category":
                         if let category = ProductCategory(rawValue: String(param[1])) {
                             categoryFilter = category
                         } else {

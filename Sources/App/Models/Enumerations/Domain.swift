@@ -7,6 +7,6 @@
 
 import Foundation
 
-enum Domain: String, Codable {
+enum Domain: String, Codable, CaseIterable {
     case electricity, automation, development
 }

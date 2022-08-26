@@ -7,6 +7,6 @@
 
 import Foundation
 
-enum ProductCategory: String, Codable {
+enum ProductCategory: String, Codable, CaseIterable {
     case material, service
 }
