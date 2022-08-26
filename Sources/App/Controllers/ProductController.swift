@@ -16,6 +16,8 @@ struct ProductController: RouteCollection {
         let tokenGroup = productGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.post("add", use: create)
         tokenGroup.patch(":id", use: update)
+        tokenGroup.get(use: getList)
+        tokenGroup.get(":params", use: getList)
     }
     
     // MARK: Routes functions
@@ -60,6 +62,67 @@ struct ProductController: RouteCollection {
     }
     
     /// Get product list
+    private func getList(req: Request) async throws -> Response {
+        let params = req.parameters.get("params")
+    
+        let products: [Product]
+        
+        if let params = params {
+            let params = params.split(separator: "&")
+            var domainFilter: Domain? = nil
+            var categoryFilter: ProductCategory? = nil
+            
+            for param in params {
+                let param = param.split(separator: "=")
+                
+                if param.count == 2 {
+                    switch param[0] {
+                    case "domain":
+                        if let domain = Domain(rawValue: String(param[1])) {
+                            domainFilter = domain
+                        } else {
+                            throw Abort(.notAcceptable)
+                        }
+                    case "productCategory":
+                        if let category = ProductCategory(rawValue: String(param[1])) {
+                            categoryFilter = category
+                        } else {
+                            throw Abort(.notAcceptable)
+                        }
+                    default:
+                        throw Abort(.notAcceptable)
+                    }
+                } else {
+                    throw Abort(.notAcceptable)
+                }
+            }
+            
+            if domainFilter != nil && categoryFilter != nil,
+               let domainFilter = domainFilter,
+               let categoryFilter = categoryFilter {
+                products = try await Product.query(on: req.db)
+                    .filter(\.$domain == domainFilter)
+                    .filter(\.$productCategory == categoryFilter)
+                    .all()
+            } else if domainFilter != nil && categoryFilter == nil,
+                      let domainFilter = domainFilter {
+                products = try await Product.query(on: req.db)
+                    .filter(\.$domain == domainFilter)
+                    .all()
+            } else if domainFilter == nil && categoryFilter != nil,
+                      let categoryFilter = categoryFilter {
+                products = try await Product.query(on: req.db)
+                    .filter(\.$productCategory == categoryFilter)
+                    .all()
+            } else {
+                products = try await getAllProducts(req: req)
+            }
+        } else {
+            products = try await getAllProducts(req: req)
+        }
+        
+        return formatResponse(status: .ok, body: try encodeBody(products))
+    }
     
     // MARK: Utilities functions
     /// Getting the connected user
@@ -77,5 +140,11 @@ struct ProductController: RouteCollection {
     /// Encode body
     private func encodeBody(_ body: Codable) throws -> Response.Body {
         return .init(data: try JSONEncoder().encode(body))
+    }
+    
+    /// Get all product list
+    private func getAllProducts(req: Request) async throws -> [Product] {
+        return try await Product.query(on: req.db)
+            .all()
     }
 }
