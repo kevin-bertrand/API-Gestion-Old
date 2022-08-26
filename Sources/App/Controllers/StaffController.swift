@@ -106,7 +106,6 @@ struct StaffController: RouteCollection {
     
     /// Get one staff info
     private func getStaffInfo(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
         let staffId = req.parameters.get("id")
         
         guard let staffId = staffId,
