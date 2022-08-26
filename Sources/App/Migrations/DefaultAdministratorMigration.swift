@@ -66,6 +66,7 @@ struct DefaultAdministratorMigration: AsyncMigration {
                                       position: .leadingBoard,
                                       role: role,
                                       passwordHash: try Bcrypt.hash(password),
+                                      permissions: .admin,
                                       addressID: addressUUID)
         try await administratorUser.save(on: database)
     }

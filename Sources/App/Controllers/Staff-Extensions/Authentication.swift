@@ -27,8 +27,10 @@ extension UserToken: ModelTokenAuthenticatable {
     
     var isValid: Bool {
         if self.creation.timeIntervalSinceNow >= 2592000 {
+            print("False")
             return false
         } else {
+            print("True")
             return true
         }
     }

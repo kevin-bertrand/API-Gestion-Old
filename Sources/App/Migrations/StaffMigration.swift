@@ -13,6 +13,7 @@ struct StaffMigration: AsyncMigration {
     func prepare(on database: Database) async throws {
         let gender = try await database.enum("gender").read()
         let position = try await database.enum("position").read()
+        let permissions = try await database.enum("permissions").read()
         
         try await database.schema(Staff.schema)
             .id()
@@ -24,6 +25,7 @@ struct StaffMigration: AsyncMigration {
             .field("position", position, .required)
             .field("role", .string, .required)
             .field("password_hash", .string, .required)
+            .field("permissions", permissions, .required)
             .field("address_id", .uuid, .required, .references(Address.schema, "id"))
             .unique(on: "email")
             .create()

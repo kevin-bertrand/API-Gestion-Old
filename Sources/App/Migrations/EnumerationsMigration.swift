@@ -37,6 +37,11 @@ struct EnumerationsMigration: AsyncMigration {
             .case("overdue")
             .create()
         
+        _ = try await database.enum("permissions")
+            .case("admin")
+            .case("user")
+            .create()
+        
         _ = try await database.enum("person_type")
             .case("company")
             .case("person")
@@ -59,6 +64,7 @@ struct EnumerationsMigration: AsyncMigration {
         try await database.enum("gender").delete()
         try await database.enum("invoice_status").delete()
         try await database.enum("person_type").delete()
+        try await database.enum("permissions").delete()
         try await database.enum("position").delete()
         try await database.enum("product_category").delete()
     }

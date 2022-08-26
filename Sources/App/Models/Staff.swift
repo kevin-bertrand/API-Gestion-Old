@@ -41,6 +41,9 @@ final class Staff: Model, Content {
     @Field(key: "password_hash")
     var passwordHash: String
     
+    @Enum(key: "permissions")
+    var permissions: Permissions
+    
     @Parent(key: "address_id")
     var address: Address
     
@@ -56,6 +59,7 @@ final class Staff: Model, Content {
          position: Position,
          role: String,
          passwordHash: String,
+         permissions: Permissions,
          addressID: Address.IDValue) {
         self.id = id
         self.firstname = firstname
@@ -66,6 +70,7 @@ final class Staff: Model, Content {
         self.position = position
         self.role = role
         self.passwordHash = passwordHash
+        self.permissions = permissions
         self.$address.id = addressID
     }
 }

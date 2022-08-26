@@ -12,16 +12,18 @@ struct AddressController {
     // MARK: Utilities functions
     // MARK: Public
     /// Check if an address is saved. If not save it.
-    func create(_ address: Address?, for req: Request) async throws -> Address? {
-        guard let address = address else { return nil }
-        
-        if let addressId = try await checkIfAddressExists(address, for: req) {
-            return addressId
+    func create(_ address: Address, for req: Request) async throws -> Address {
+        if let savedAddress = try await checkIfAddressExists(address, for: req) {
+            return savedAddress
         }
         
         try await address.save(on: req.db)
         
-        return try await checkIfAddressExists(address, for: req)
+        if let savedAddress = try await checkIfAddressExists(address, for: req) {
+            return savedAddress
+        } else {
+            throw Abort(.internalServerError)
+        }
     }
     
     /// Return an address from its ID
