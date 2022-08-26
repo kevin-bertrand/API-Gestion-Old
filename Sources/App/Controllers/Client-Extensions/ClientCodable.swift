@@ -8,7 +8,7 @@
 import Foundation
 
 extension Client {
-    struct Create: Codable {
+    struct Informations: Codable {
         let firstname: String?
         let lastname: String?
         let company: String?

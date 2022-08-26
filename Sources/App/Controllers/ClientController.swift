@@ -18,13 +18,14 @@ struct ClientController: RouteCollection {
                 
         let tokenGroup = clientGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.post("add", use: create)
+        tokenGroup.patch(":id", use: update)
     }
     
     // MARK: Routes functions
     /// Create client
     private func create(req: Request) async throws -> Response {
         let userAuth = try getUserAuthFor(req)
-        let newClient = try req.content.decode(Client.Create.self)
+        let newClient = try req.content.decode(Client.Informations.self)
         
         guard userAuth.permissions == .admin else {
             throw Abort(.unauthorized)
@@ -46,6 +47,35 @@ struct ClientController: RouteCollection {
     }
     
     /// Update client
+    private func update(req: Request) async throws -> Response {
+        let userAuth = try getUserAuthFor(req)
+        let updatedClient = try req.content.decode(Client.Informations.self)
+        let clientId = req.parameters.get("id", as: UUID.self)
+        
+        guard userAuth.permissions == .admin else {
+            throw Abort(.unauthorized)
+        }
+        
+        guard let clientId = clientId else {
+            throw Abort(.notAcceptable)
+        }
+        
+        try await Client.query(on: req.db)
+            .set(\.$firstname, to: updatedClient.firstname)
+            .set(\.$lastname, to: updatedClient.lastname)
+            .set(\.$company, to: updatedClient.company)
+            .set(\.$phone, to: updatedClient.phone)
+            .set(\.$email, to: updatedClient.email)
+            .set(\.$personType, to: updatedClient.personType)
+            .set(\.$gender, to: updatedClient.gender ?? .notDetermined)
+            .set(\.$siret, to: updatedClient.siret)
+            .set(\.$tva, to: updatedClient.tva)
+            .set(\.$address.$id, to: try await addressController.create(updatedClient.address, for: req).requireID())
+            .filter(\.$id == clientId)
+            .update()
+        
+        return formatResponse(status: .ok, body: .empty)
+    }
     
     // MARK: Utilities functions
     /// Getting the connected user
