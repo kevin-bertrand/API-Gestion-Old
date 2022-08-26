@@ -20,4 +20,10 @@ extension Client {
         let tva: String?
         let address: Address
     }
+    
+    struct Summary: Codable {
+        let firstname: String?
+        let lastname: String?
+        let company: String?
+    }
 }

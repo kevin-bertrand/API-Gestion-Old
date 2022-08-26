@@ -37,4 +37,12 @@ extension Estimate {
         let limitValidifyDate: Date?
         let products: [Product.UpdateEstimate]
     }
+    
+    struct Summary: Codable {
+        let client: Client.Summary
+        let reference: String
+        let grandTotal: Double
+        let status: EstimateStatus
+        let limitValidifyDate: Date
+    }
 }

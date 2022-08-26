@@ -41,10 +41,10 @@ final class Invoice: Model, Content {
     @Field(key: "grand_total")
     var grandTotal: Double
     
-    @Timestamp(key: "creation", on: .create, format: .iso8601)
+    @Timestamp(key: "creation", on: .create, format: .default)
     var creation: Date?
     
-    @Timestamp(key: "update", on: .update, format: .iso8601)
+    @Timestamp(key: "update", on: .update, format: .default)
     var update: Date?
     
     @Enum(key: "status")

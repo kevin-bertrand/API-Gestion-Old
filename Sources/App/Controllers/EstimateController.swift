@@ -15,6 +15,8 @@ struct EstimateController: RouteCollection {
                 
         let tokenGroup = estimateGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getEstimateReference)
+        tokenGroup.get("list", use: getList)
+        tokenGroup.get("list", ":filter", use: getList)
         tokenGroup.post("add", use: create)
         tokenGroup.patch(use: update)
     }
@@ -132,7 +134,97 @@ struct EstimateController: RouteCollection {
         return formatResponse(status: .ok, body: .empty)
     }
     
-    /// Export as invoice
+    /// Getting invoice list
+    private func getList(req: Request) async throws -> Response {
+        let filters = req.parameters.get("filter")
+        
+        let estimates: [Estimate.Summary]
+        
+        if let filters = filters {
+            let filters = filters.split(separator: "&")
+            var endDate: Date? = nil
+            var startDate: Date? = nil
+            var clientID: UUID? = nil
+            
+            for filter in filters {
+                let filter = filter.split(separator: "=")
+                
+                if filter.count == 2 {
+                    switch filter[0] {
+                    case "client":
+                        if let id = UUID(uuidString: String(filter[1])) {
+                            clientID = id
+                        } else {
+                            throw Abort(.notAcceptable)
+                        }
+                    case "start":
+                        if let start = Double(filter[1])?.toDate {
+                            startDate = start
+                        } else {
+                            throw Abort(.notAcceptable)
+                        }
+                    case "end":
+                        if let end = Double(filter[1])?.toDate {
+                            endDate = end
+                        } else {
+                            throw Abort(.notAcceptable)
+                        }
+                    default:
+                        throw Abort(.notAcceptable)
+                    }
+                } else {
+                    throw Abort(.notAcceptable)
+                }
+            }
+            
+            if endDate != nil && startDate != nil && clientID != nil, let endDate = endDate, let startDate = startDate, let clientID = clientID {
+                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
+                    .filter(\.$client.$id == clientID)
+                    .filter(\.$creation >= startDate)
+                    .filter(\.$creation <= endDate)
+                    .with(\.$client)
+                    .all())
+            } else if endDate == nil && startDate != nil && clientID != nil, let startDate = startDate, let clientID = clientID {
+                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
+                    .filter(\.$client.$id == clientID)
+                    .filter(\.$creation >= startDate)
+                    .with(\.$client)
+                    .all())
+            } else if endDate != nil && startDate == nil && clientID != nil, let endDate = endDate, let clientID = clientID {
+                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
+                    .filter(\.$client.$id == clientID)
+                    .filter(\.$creation <= endDate)
+                    .with(\.$client)
+                    .all())
+            } else if endDate != nil && startDate != nil && clientID == nil, let endDate = endDate, let startDate = startDate {
+                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
+                    .filter(\.$creation >= startDate)
+                    .filter(\.$creation <= endDate)
+                    .with(\.$client)
+                    .all())
+            } else if endDate != nil && startDate == nil && clientID == nil, let endDate = endDate {
+                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
+                    .filter(\.$creation <= endDate)
+                    .all())
+            } else if endDate == nil && startDate == nil && clientID != nil, let clientID = clientID {
+                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
+                    .filter(\.$client.$id == clientID)
+                    .with(\.$client)
+                    .all())
+            } else if endDate == nil && startDate != nil && clientID == nil, let startDate = startDate {
+                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
+                    .filter(\.$creation >= startDate)
+                    .with(\.$client)
+                    .all())
+            } else {
+                estimates = try await getAllEstimates(req: req)
+            }
+        } else {
+            estimates = try await getAllEstimates(req: req)
+        }
+        
+        return formatResponse(status: .ok, body: try encodeBody(estimates))
+    }
     
     // MARK: Utilities functions
     /// Getting the connected user
@@ -150,5 +242,29 @@ struct EstimateController: RouteCollection {
     /// Encode body
     private func encodeBody(_ body: Codable) throws -> Response.Body {
         return .init(data: try JSONEncoder().encode(body))
+    }
+    
+    /// Getting all estimates
+    private func getAllEstimates(req: Request) async throws -> [Estimate.Summary] {
+        return formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db).with(\.$client).all())
+    }
+    
+    /// Format estimate summary
+    private func formatEstimatesSummary(req: Request, estimates: [Estimate]) -> [Estimate.Summary] {
+        var estimateSummary: [Estimate.Summary] = []
+        
+        for estimate in estimates {
+            if let client = estimate.$client.value {
+                estimateSummary.append(Estimate.Summary(client: Client.Summary(firstname: client.firstname,
+                                                                               lastname: client.lastname,
+                                                                               company: client.company),
+                                                 reference: estimate.reference,
+                                                 grandTotal: estimate.grandTotal,
+                                                 status: estimate.status,
+                                                 limitValidifyDate: estimate.limitValidityDate))
+            }
+        }
+        
+        return estimateSummary
     }
 }
