@@ -16,6 +16,7 @@ struct PaymentController: RouteCollection {
         let tokenGroup = paymentGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.post("add", use: create)
         tokenGroup.patch(":id", use: update)
+        tokenGroup.delete(":id", use: delete)
     }
     
     // MARK: Routes functions
@@ -58,6 +59,22 @@ struct PaymentController: RouteCollection {
     }
     
     /// Delete
+    private func delete(req: Request) async throws -> Response {
+        let userAuth = try getUserAuthFor(req)
+        let paymentID = req.parameters.get("id", as: UUID.self)
+        
+        guard userAuth.permissions == .admin else {
+            throw Abort(.unauthorized)
+        }
+        
+        guard let paymentID = paymentID else {
+            throw Abort(.notAcceptable)
+        }
+        
+        try await PayementMethod.find(paymentID, on: req.db)?.delete(on: req.db)
+        
+        return formatResponse(status: .ok, body: .empty)
+    }
     
     /// Get list
     
