@@ -17,6 +17,7 @@ struct PaymentController: RouteCollection {
         tokenGroup.post("add", use: create)
         tokenGroup.patch(":id", use: update)
         tokenGroup.delete(":id", use: delete)
+        tokenGroup.get(use: getList)
     }
     
     // MARK: Routes functions
@@ -77,6 +78,12 @@ struct PaymentController: RouteCollection {
     }
     
     /// Get list
+    private func getList(req: Request) async throws -> Response {
+        let payments = try await PayementMethod.query(on: req.db)
+            .all()
+        
+        return formatResponse(status: .ok, body: try encodeBody(payments))
+    }
     
     // MARK: Utilities functions
     /// Getting the connected user
