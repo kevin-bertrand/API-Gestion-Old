@@ -10,4 +10,5 @@ func routes(_ app: Application) throws {
     try app.register(collection: PaymentController())
     try app.register(collection: EstimateController(addressController: addressController))
     try app.register(collection: InvoiceController(addressController: addressController))
+    try app.register(collection: RevenuesController())
 }
