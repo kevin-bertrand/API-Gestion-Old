@@ -13,7 +13,7 @@ extension Product {
         let quantity: Double
     }
     
-    struct UpdateEstimate: Codable {
+    struct Update: Codable {
         let productEstimateID: UUID?
         let productID: UUID
         let quantity: Double

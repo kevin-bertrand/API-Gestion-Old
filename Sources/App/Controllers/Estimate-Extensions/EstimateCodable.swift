@@ -35,7 +35,7 @@ extension Estimate {
         let grandTotal: Double
         let status: EstimateStatus
         let limitValidifyDate: Date?
-        let products: [Product.UpdateEstimate]
+        let products: [Product.Update]
     }
     
     struct Summary: Codable {

@@ -19,6 +19,7 @@ struct InvoiceController: RouteCollection {
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
         tokenGroup.post(use: create)
+        tokenGroup.patch(use: update)
     }
     
     // MARK: Routes functions
@@ -82,6 +83,45 @@ struct InvoiceController: RouteCollection {
     }
     
     /// Update invoice
+    private func update(req: Request) async throws -> Response {
+        let updatedInvoice = try req.content.decode(Invoice.Update.self)
+        
+        try await Invoice.query(on: req.db)
+            .set(\.$object, to: updatedInvoice.object)
+            .set(\.$totalServices, to: updatedInvoice.totalServices)
+            .set(\.$totalMaterials, to: updatedInvoice.totalMaterials)
+            .set(\.$total, to: updatedInvoice.total)
+            .set(\.$reduction, to: updatedInvoice.reduction)
+            .set(\.$grandTotal, to: updatedInvoice.grandTotal)
+            .set(\.$status, to: updatedInvoice.status)
+            .set(\.$limitPayementDate, to: updatedInvoice.limitPayementDate ?? Date().addingTimeInterval(2592000))
+            .filter(\.$reference == updatedInvoice.reference)
+            .update()
+        
+        for product in updatedInvoice.products {
+            if product.quantity == 0 {
+                try await ProductInvoice.query(on: req.db)
+                    .filter(\.$product.$id == product.productID)
+                    .filter(\.$invoice.$id == updatedInvoice.id)
+                    .delete()
+            } else {
+                if let _ = try await ProductInvoice.query(on: req.db)
+                    .filter(\.$product.$id == product.productID)
+                    .filter(\.$invoice.$id == updatedInvoice.id)
+                    .first() {
+                    try await ProductInvoice.query(on: req.db)
+                        .set(\.$quantity, to: product.quantity)
+                        .filter(\.$product.$id == product.productID)
+                        .filter(\.$invoice.$id == updatedInvoice.id)
+                        .update()
+                } else {
+                    try await ProductInvoice(quantity: product.quantity, productID: product.productID, invoiceID: updatedInvoice.id).save(on: req.db)
+                }
+            }
+        }
+        
+        return formatResponse(status: .ok, body: .empty)
+    }
     /// Getting invoice list
     /// Getting invoice
     
