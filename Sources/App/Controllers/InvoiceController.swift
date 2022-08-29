@@ -21,6 +21,7 @@ struct InvoiceController: RouteCollection {
         tokenGroup.post(use: create)
         tokenGroup.patch(use: update)
         tokenGroup.get(use: getList)
+        tokenGroup.get(":id", use: getInvoice)
     }
     
     // MARK: Routes functions
@@ -131,8 +132,53 @@ struct InvoiceController: RouteCollection {
         
         return formatResponse(status: .ok, body: try encodeBody(formatInvoiceSummaray(invoices)))
     }
-    /// Getting invoice
     
+    /// Getting invoice
+    private func getInvoice(req: Request) async throws -> Response {
+        let id = req.parameters.get("id", as: UUID.self)
+        
+        guard let id = id, let invoice = try await Invoice.find(id, on: req.db), let client = try await Client.find(invoice.$client.id, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        
+        let productsInvoice = try await ProductInvoice.query(on: req.db).filter(\.$invoice.$id == id).all()
+        var products: [Product.Informations] = []
+        
+        for productInvoice in productsInvoice {
+            guard let product = try await Product.find(productInvoice.$product.id, on: req.db) else { throw Abort(.notAcceptable) }
+            products.append(Product.Informations(quantity: productInvoice.quantity,
+                                                 title: product.title,
+                                                 unity: product.unity,
+                                                 domain: product.domain,
+                                                 productCategory: product.productCategory,
+                                                 price: product.price))
+        }
+        
+        let invoiceInformations = Invoice.Informations(id: id,
+                                                       reference: invoice.reference,
+                                                       internalReference: invoice.internalReference,
+                                                       object: invoice.object,
+                                                       totalServices: invoice.totalServices,
+                                                       totalMaterials: invoice.totalMaterials,
+                                                       total: invoice.total,
+                                                       reduction: invoice.reduction,
+                                                       grandTotal: invoice.grandTotal,
+                                                       status: invoice.status,
+                                                       limitPayementDate: invoice.limitPayementDate,
+                                                       client: Client.Informations(firstname: client.firstname,
+                                                                                   lastname: client.lastname,
+                                                                                   company: client.company,
+                                                                                   phone: client.phone,
+                                                                                   email: client.email,
+                                                                                   personType: client.personType,
+                                                                                   gender: client.gender,
+                                                                                   siret: client.siret,
+                                                                                   tva: client.tva,
+                                                                                   address: try await addressController.getAddressFromId(client.$address.id, for: req)),
+                                                       products: products)
+        
+        return formatResponse(status: .ok, body: try encodeBody(invoiceInformations))
+    }
     // MARK: Utilities functions
     /// Getting the connected user
     private func getUserAuthFor(_ req: Request) throws -> Staff {

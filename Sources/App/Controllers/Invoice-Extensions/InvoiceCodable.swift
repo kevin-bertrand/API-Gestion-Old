@@ -48,4 +48,20 @@ extension Invoice {
         let status: InvoiceStatus
         let limitPayementDate: Date
     }
+    
+    struct Informations: Codable {
+        let id: UUID
+        let reference: String
+        let internalReference: String
+        let object: String
+        let totalServices: Double
+        let totalMaterials: Double
+        let total: Double
+        let reduction: Double
+        let grandTotal: Double
+        let status: InvoiceStatus
+        let limitPayementDate: Date
+        let client: Client.Informations
+        let products: [Product.Informations]
+    }
 }
