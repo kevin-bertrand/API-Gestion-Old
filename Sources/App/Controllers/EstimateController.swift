@@ -60,7 +60,18 @@ struct EstimateController: RouteCollection {
     private func create(req: Request) async throws -> Response {
         let newEstimate = try req.content.decode(Estimate.Create.self)
         
-        try await Estimate(reference: newEstimate.reference, internalReference: newEstimate.internalReference, object: newEstimate.object, totalServices: newEstimate.totalServices, totalMaterials: newEstimate.totalMaterials, total: newEstimate.total, reduction: newEstimate.reduction, grandTotal: newEstimate.grandTotal, status: newEstimate.status, limitValidityDate: newEstimate.limitValidifyDate ?? nil, clientID: newEstimate.clientID).save(on: req.db)
+        try await Estimate(reference: newEstimate.reference,
+                           internalReference: newEstimate.internalReference,
+                           object: newEstimate.object,
+                           totalServices: newEstimate.totalServices,
+                           totalMaterials: newEstimate.totalMaterials,
+                           total: newEstimate.total,
+                           reduction: newEstimate.reduction,
+                           grandTotal: newEstimate.grandTotal,
+                           status: newEstimate.status,
+                           limitValidityDate: newEstimate.limitValidifyDate ?? nil,
+                           clientID: newEstimate.clientID)
+        .save(on: req.db)
         
         let estimate = try await Estimate.query(on: req.db)
             .filter(\.$reference == newEstimate.reference)
@@ -80,6 +91,10 @@ struct EstimateController: RouteCollection {
     /// Update lines
     private func update(req: Request) async throws -> Response {
         let updateEstimate = try req.content.decode(Estimate.Update.self)
+        
+        guard let estimate = try await Estimate.find(updateEstimate.id, on: req.db), !estimate.isArchive else {
+            throw Abort(.notAcceptable)
+        }
         
         try await Estimate.query(on: req.db)
             .set(\.$object, to: updateEstimate.object)
@@ -246,6 +261,7 @@ struct EstimateController: RouteCollection {
                                                          grandTotal: estimate.grandTotal,
                                                          status: estimate.status,
                                                          limitValidityDate: estimate.limitValidityDate,
+                                                         isArchive: estimate.isArchive,
                                                          client: Client.Informations(firstname: client.firstname,
                                                                                      lastname: client.lastname,
                                                                                      company: client.company,
@@ -311,6 +327,11 @@ struct EstimateController: RouteCollection {
             throw Abort(.internalServerError)
         }
         
+        try await Estimate.query(on: req.db)
+            .set(\.$isArchive, to: true)
+            .filter(\.$id == estimateId)
+            .update()
+        
         return formatResponse(status: addInvoiceResponse.status, body: .init(buffer: responseBody))
     }
     
@@ -350,7 +371,8 @@ struct EstimateController: RouteCollection {
                                                         reference: estimate.reference,
                                                         grandTotal: estimate.grandTotal,
                                                         status: estimate.status,
-                                                        limitValidifyDate: estimate.limitValidityDate))
+                                                        limitValidifyDate: estimate.limitValidityDate,
+                                                        isArchive: estimate.isArchive))
             }
         }
         

@@ -47,6 +47,7 @@ extension Invoice {
         let grandTotal: Double
         let status: InvoiceStatus
         let limitPayementDate: Date
+        let isArchive: Bool
     }
     
     struct Informations: Codable {
@@ -63,5 +64,6 @@ extension Invoice {
         let limitPayementDate: Date
         let client: Client.Informations
         let products: [Product.Informations]
+        let isArchive: Bool
     }
 }

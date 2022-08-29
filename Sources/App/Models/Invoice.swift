@@ -59,6 +59,9 @@ final class Invoice: Model, Content {
     @Siblings(through: ProductInvoice.self, from: \.$invoice, to: \.$product)
     public var products: [Product]
     
+    @Field(key: "is_archive")
+    var isArchive: Bool
+    
     // Initialization functions
     init() {}
     
@@ -73,7 +76,8 @@ final class Invoice: Model, Content {
          grandTotal: Double,
          status: InvoiceStatus,
          limitPayementDate: Date? = nil,
-         clientID: Client.IDValue) {
+         clientID: Client.IDValue,
+         isArchive: Bool = false) {
         self.id = id
         self.internalReference = internalReference
         self.object = object
@@ -86,5 +90,6 @@ final class Invoice: Model, Content {
         self.status = status
         self.limitPayementDate = limitPayementDate ?? Date().addingTimeInterval(2592000)
         self.$client.id = clientID
+        self.isArchive = isArchive
     }
 }

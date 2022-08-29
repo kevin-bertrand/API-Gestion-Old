@@ -45,6 +45,7 @@ extension Estimate {
         let grandTotal: Double
         let status: EstimateStatus
         let limitValidifyDate: Date
+        let isArchive: Bool
     }
     
     struct Informations: Codable {
@@ -59,6 +60,7 @@ extension Estimate {
         let grandTotal: Double
         let status: EstimateStatus
         let limitValidityDate: Date
+        let isArchive: Bool
         let client: Client.Informations
         let products: [Product.Informations]
     }

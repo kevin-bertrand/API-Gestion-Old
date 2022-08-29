@@ -59,6 +59,9 @@ final class Estimate: Model, Content {
     @Siblings(through: ProductEstimate.self, from: \.$estimate, to: \.$product)
     public var products: [Product]
     
+    @Field(key: "is_archive")
+    var isArchive: Bool
+    
     // Initialization functions
     init() {}
     
@@ -73,7 +76,8 @@ final class Estimate: Model, Content {
          grandTotal: Double,
          status: EstimateStatus,
          limitValidityDate: Date?,
-         clientID: Client.IDValue) {
+         clientID: Client.IDValue,
+         isArchive: Bool = false) {
         self.id = id
         self.reference = reference
         self.internalReference = internalReference
@@ -86,5 +90,6 @@ final class Estimate: Model, Content {
         self.status = status
         self.limitValidityDate = limitValidityDate ?? Date().addingTimeInterval(2592000)
         self.$client.id = clientID
+        self.isArchive = isArchive
     }
 }

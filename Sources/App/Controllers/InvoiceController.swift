@@ -88,6 +88,10 @@ struct InvoiceController: RouteCollection {
     private func update(req: Request) async throws -> Response {
         let updatedInvoice = try req.content.decode(Invoice.Update.self)
         
+        guard let invoice = try await Invoice.find(updatedInvoice.id, on: req.db), !invoice.isArchive else {
+            throw Abort(.notAcceptable)
+        }
+        
         try await Invoice.query(on: req.db)
             .set(\.$object, to: updatedInvoice.object)
             .set(\.$totalServices, to: updatedInvoice.totalServices)
@@ -97,6 +101,7 @@ struct InvoiceController: RouteCollection {
             .set(\.$grandTotal, to: updatedInvoice.grandTotal)
             .set(\.$status, to: updatedInvoice.status)
             .set(\.$limitPayementDate, to: updatedInvoice.limitPayementDate ?? Date().addingTimeInterval(2592000))
+            .set(\.$isArchive, to: updatedInvoice.status == .payed ? true : false)
             .filter(\.$reference == updatedInvoice.reference)
             .update()
         
@@ -175,7 +180,8 @@ struct InvoiceController: RouteCollection {
                                                                                    siret: client.siret,
                                                                                    tva: client.tva,
                                                                                    address: try await addressController.getAddressFromId(client.$address.id, for: req)),
-                                                       products: products)
+                                                       products: products,
+                                                       isArchive: invoice.isArchive)
         
         return formatResponse(status: .ok, body: try encodeBody(invoiceInformations))
     }
@@ -203,7 +209,15 @@ struct InvoiceController: RouteCollection {
         
         for invoice in invoices {
             if let client = invoice.$client.value {
-                invoiceSummary.append(Invoice.Summary(id: invoice.id, client: Client.Summary(firstname: client.firstname, lastname: client.lastname, company: client.company), reference: invoice.reference, grandTotal: invoice.grandTotal, status: invoice.status, limitPayementDate: invoice.limitPayementDate))
+                invoiceSummary.append(Invoice.Summary(id: invoice.id,
+                                                      client: Client.Summary(firstname: client.firstname,
+                                                                             lastname: client.lastname,
+                                                                             company: client.company),
+                                                      reference: invoice.reference,
+                                                      grandTotal: invoice.grandTotal,
+                                                      status: invoice.status,
+                                                      limitPayementDate: invoice.limitPayementDate,
+                                                      isArchive: invoice.isArchive))
             }
         }
         

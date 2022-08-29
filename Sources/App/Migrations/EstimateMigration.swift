@@ -28,6 +28,7 @@ struct EstimateMigration: AsyncMigration {
             .field("status", estimateStatus, .required)
             .field("limit_validity_date", .date, .required)
             .field("client_id", .uuid, .required, .references(Client.schema, "id"))
+            .field("is_archive", .bool, .required)
             .unique(on: "reference")
             .create()
     }
