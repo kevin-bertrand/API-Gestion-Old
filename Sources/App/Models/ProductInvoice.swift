@@ -29,10 +29,10 @@ final class ProductInvoice: Model, Content {
     // Initialization functions
     init() {}
     
-    init(id: UUID? = nil, quantity: Double, product: Product, invoice: Invoice) throws {
+    init(id: UUID? = nil, quantity: Double, productID: UUID, invoiceID: UUID) throws {
         self.id = id
         self.quantity = quantity
-        self.$product.id = try product.requireID()
-        self.$invoice.id = try invoice.requireID()
+        self.$product.id = productID
+        self.$invoice.id = invoiceID
     }
 }

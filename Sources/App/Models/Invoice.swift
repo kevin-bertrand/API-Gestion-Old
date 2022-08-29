@@ -72,7 +72,7 @@ final class Invoice: Model, Content {
          reduction: Double,
          grandTotal: Double,
          status: InvoiceStatus,
-         limitPayementDate: Date = Date().addingTimeInterval(2592000),
+         limitPayementDate: Date? = nil,
          clientID: Client.IDValue) {
         self.id = id
         self.internalReference = internalReference
@@ -84,7 +84,7 @@ final class Invoice: Model, Content {
         self.reduction = reduction
         self.grandTotal = grandTotal
         self.status = status
-        self.limitPayementDate = limitPayementDate
+        self.limitPayementDate = limitPayementDate ?? Date().addingTimeInterval(2592000)
         self.$client.id = clientID
     }
 }

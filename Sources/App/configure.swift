@@ -20,7 +20,7 @@ public func configure(_ app: Application) throws {
     
     // Server configuration
     app.http.server.configuration.hostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
-    app.http.server.configuration.port = 2574
+    app.http.server.configuration.port = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
 
     // Migrations
     app.migrations.add(EnumerationsMigration())

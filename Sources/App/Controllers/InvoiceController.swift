@@ -18,6 +18,7 @@ struct InvoiceController: RouteCollection {
         
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
+        tokenGroup.post(use: create)
     }
     
     // MARK: Routes functions
@@ -45,11 +46,41 @@ struct InvoiceController: RouteCollection {
                 number.append(newNumber)
             }
         }
-
+        
         return formatResponse(status: .ok, body: try encodeBody("F-\(date)-\(number)"))
     }
     
     /// Create invoice
+    private func create(req: Request) async throws -> Response {
+        let newInvoice = try req.content.decode(Invoice.Create.self)
+        try await Invoice(reference: newInvoice.reference,
+                          internalReference: newInvoice.internalReference,
+                          object: newInvoice.object,
+                          totalServices: newInvoice.totalServices,
+                          totalMaterials: newInvoice.totalMaterials,
+                          total: newInvoice.total,
+                          reduction: newInvoice.reduction,
+                          grandTotal: newInvoice.grandTotal,
+                          status: newInvoice.status,
+                          limitPayementDate: newInvoice.limitPayementDate,
+                          clientID: newInvoice.clientID)
+        .save(on: req.db)
+        
+        let invoice = try await Invoice.query(on: req.db)
+            .filter(\.$reference == newInvoice.reference)
+            .first()
+        
+        guard let invoice = invoice, let invoiceId = invoice.id else {
+            throw Abort(.internalServerError)
+        }
+        
+        for product in newInvoice.products {
+            try await ProductInvoice(quantity: product.quantity, productID: product.productID, invoiceID: invoiceId).save(on: req.db)
+        }
+        
+        return formatResponse(status: .created, body: try encodeBody("\(invoice.reference) is created!"))
+    }
+    
     /// Update invoice
     /// Getting invoice list
     /// Getting invoice

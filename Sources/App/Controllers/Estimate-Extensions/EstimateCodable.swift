@@ -20,7 +20,7 @@ extension Estimate {
         let status: EstimateStatus
         let limitValidifyDate: Date?
         let clientID: UUID
-        let products: [Product.CreateEstimate]
+        let products: [Product.Create]
     }
     
     struct Update: Codable {

@@ -15,7 +15,7 @@ struct EstimateController: RouteCollection {
     // MARK: Route initialisation
     func boot(routes: RoutesBuilder) throws {
         let estimateGroup = routes.grouped("estimate")
-                
+        
         let tokenGroup = estimateGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getEstimateReference)
         tokenGroup.get("list", use: getList)
@@ -23,6 +23,7 @@ struct EstimateController: RouteCollection {
         tokenGroup.get(":id", use: getEstimate)
         tokenGroup.post("add", use: create)
         tokenGroup.patch(use: update)
+        tokenGroup.post("toInvoice", ":reference", use: exportToInvoice)
     }
     
     // MARK: Routes functions
@@ -51,7 +52,7 @@ struct EstimateController: RouteCollection {
                 number.append(newNumber)
             }
         }
-            
+        
         return formatResponse(status: .ok, body: try encodeBody("D-\(date)-\(number)"))
     }
     
@@ -260,6 +261,59 @@ struct EstimateController: RouteCollection {
         return formatResponse(status: .ok, body: try encodeBody(estimateInformations))
     }
     
+    /// Export estimate to invoice
+    private func exportToInvoice(req: Request) async throws -> Response {
+        let estimateRef = req.parameters.get("reference")
+        let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
+        let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
+        
+        guard let estimateRef = estimateRef,
+              let estimate = try await Estimate.query(on: req.db).filter(\.$reference == estimateRef).first(),
+              let estimateId = estimate.id else {
+            throw Abort(.notFound)
+        }
+        
+        let invoiceRefResponse = try await req.client.get("http://\(serverIP):\(serverPort)/invoice/reference", headers: req.headers)
+        
+        guard var invoiceRef = invoiceRefResponse.body, let data = invoiceRef.readData(length: invoiceRef.readableBytes) else {
+            throw Abort(.internalServerError)
+        }
+        
+        let reference = try JSONDecoder().decode(String.self, from: data)
+        
+        let products = try await ProductEstimate.query(on: req.db)
+            .filter(\.$estimate.$id == estimateId)
+            .all()
+        
+        var newInvoiceProducts: [Product.Create] = []
+        
+        for product in products {
+            newInvoiceProducts.append(.init(productID: product.$product.id, quantity: product.quantity))
+        }
+        
+        let newInvoice = Invoice.Create(reference: reference,
+                                        internalReference: estimate.internalReference,
+                                        object: estimate.object, totalServices: estimate.totalServices,
+                                        totalMaterials: estimate.totalMaterials,
+                                        total: estimate.total,
+                                        reduction: estimate.reduction,
+                                        grandTotal: estimate.grandTotal,
+                                        status: .inCreation,
+                                        limitPayementDate: nil,
+                                        clientID: estimate.$client.id,
+                                        products: newInvoiceProducts)
+        
+        let addInvoiceResponse = try await req.client.post("http://\(serverIP):\(serverPort)/invoice",
+                                                           headers: req.headers,
+                                                           content: newInvoice)
+        
+        guard let responseBody = addInvoiceResponse.body else {
+            throw Abort(.internalServerError)
+        }
+        
+        return formatResponse(status: addInvoiceResponse.status, body: .init(buffer: responseBody))
+    }
+    
     // MARK: Utilities functions
     /// Getting the connected user
     private func getUserAuthFor(_ req: Request) throws -> Staff {
@@ -293,10 +347,10 @@ struct EstimateController: RouteCollection {
                                                         client: Client.Summary(firstname: client.firstname,
                                                                                lastname: client.lastname,
                                                                                company: client.company),
-                                                 reference: estimate.reference,
-                                                 grandTotal: estimate.grandTotal,
-                                                 status: estimate.status,
-                                                 limitValidifyDate: estimate.limitValidityDate))
+                                                        reference: estimate.reference,
+                                                        grandTotal: estimate.grandTotal,
+                                                        status: estimate.status,
+                                                        limitValidifyDate: estimate.limitValidityDate))
             }
         }
         
