@@ -39,4 +39,13 @@ extension Invoice {
         let limitPayementDate: Date?
         let products: [Product.Update]
     }
+    
+    struct Summary: Codable {
+        let id: UUID?
+        let client: Client.Summary
+        let reference: String
+        let grandTotal: Double
+        let status: InvoiceStatus
+        let limitPayementDate: Date
+    }
 }

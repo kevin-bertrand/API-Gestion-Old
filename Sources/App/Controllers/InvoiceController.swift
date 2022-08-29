@@ -20,6 +20,7 @@ struct InvoiceController: RouteCollection {
         tokenGroup.get("reference", use: getInvoiceReference)
         tokenGroup.post(use: create)
         tokenGroup.patch(use: update)
+        tokenGroup.get(use: getList)
     }
     
     // MARK: Routes functions
@@ -123,6 +124,13 @@ struct InvoiceController: RouteCollection {
         return formatResponse(status: .ok, body: .empty)
     }
     /// Getting invoice list
+    private func getList(req: Request) async throws -> Response {
+        let invoices = try await Invoice.query(on: req.db)
+            .with(\.$client)
+            .all()
+        
+        return formatResponse(status: .ok, body: try encodeBody(formatInvoiceSummaray(invoices)))
+    }
     /// Getting invoice
     
     // MARK: Utilities functions
@@ -141,5 +149,18 @@ struct InvoiceController: RouteCollection {
     /// Encode body
     private func encodeBody(_ body: Codable) throws -> Response.Body {
         return .init(data: try JSONEncoder().encode(body))
+    }
+    
+    /// Format invoice summary
+    private func formatInvoiceSummaray(_ invoices: [Invoice]) -> [Invoice.Summary] {
+        var invoiceSummary: [Invoice.Summary] = []
+        
+        for invoice in invoices {
+            if let client = invoice.$client.value {
+                invoiceSummary.append(Invoice.Summary(id: invoice.id, client: Client.Summary(firstname: client.firstname, lastname: client.lastname, company: client.company), reference: invoice.reference, grandTotal: invoice.grandTotal, status: invoice.status, limitPayementDate: invoice.limitPayementDate))
+            }
+        }
+        
+        return invoiceSummary
     }
 }
