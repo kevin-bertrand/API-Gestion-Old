@@ -127,6 +127,29 @@ struct InvoiceController: RouteCollection {
             }
         }
         
+        if let invoice = try await Invoice.find(updatedInvoice.id, on: req.db), invoice.isArchive == true {
+            let reference = invoice.reference.split(separator: "-")
+            
+            guard reference.count == 3,
+                  let year = Int(String(reference[1].dropLast(2))),
+                  let month = Int(String(reference[1].dropFirst(4))) else {
+                throw Abort(.internalServerError)
+            }
+            
+            try await addToYearRevenue(year: year,
+                                       totalServices: invoice.totalServices,
+                                       totalMaterial: invoice.totalMaterials,
+                                       grandTotal: invoice.grandTotal, in: req)
+            try await addToMonthRevenue(month: month,
+                                        year: year,
+                                        totalServices: invoice.totalServices,
+                                        totalMaterial: invoice.totalMaterials,
+                                        grandTotal: invoice.grandTotal,
+                                        in: req)
+        } else {
+            print("no")
+        }
+        
         return formatResponse(status: .ok, body: .empty)
     }
     /// Getting invoice list
@@ -222,5 +245,34 @@ struct InvoiceController: RouteCollection {
         }
         
         return invoiceSummary
+    }
+    
+    /// Adding invoice to year revenue
+    private func addToYearRevenue(year: Int, totalServices: Double, totalMaterial: Double, grandTotal: Double, in req: Request) async throws {
+        if let record = try await YearRevenue.query(on: req.db).filter(\.$year == year).first() {
+            try await YearRevenue.query(on: req.db)
+                .set(\.$totalServices, to: (record.totalServices + totalServices))
+                .set(\.$totalMaterials, to: (record.totalMaterials + totalMaterial))
+                .set(\.$grandTotal, to: (record.grandTotal + grandTotal))
+                .filter(\.$year == year)
+                .update()
+        } else {
+            try await YearRevenue(year: year, totalServices: totalServices, totalMaterials: totalMaterial, grandTotal: grandTotal).save(on: req.db)
+        }
+    }
+    
+    /// Adding invoice to month revenue
+    private func addToMonthRevenue(month: Int, year: Int, totalServices: Double, totalMaterial: Double, grandTotal: Double, in req: Request) async throws {
+        if let record = try await MonthRevenue.query(on: req.db).filter(\.$year == year).filter(\.$month == month).first() {
+            try await MonthRevenue.query(on: req.db)
+                .set(\.$totalServices, to: (record.totalServices + totalServices))
+                .set(\.$totalMaterials, to: (record.totalMaterials + totalMaterial))
+                .set(\.$grandTotal, to: (record.grandTotal + grandTotal))
+                .filter(\.$year == year)
+                .filter(\.$month == month)
+                .update()
+        } else {
+            try await MonthRevenue(month: month, year: year, totalServices: totalServices, totalMaterials: totalMaterial, grandTotal: grandTotal).save(on: req.db)
+        }
     }
 }
