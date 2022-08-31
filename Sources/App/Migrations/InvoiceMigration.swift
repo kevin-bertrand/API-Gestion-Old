@@ -20,6 +20,7 @@ struct InvoiceMigration: AsyncMigration {
             .field("object", .string, .required)
             .field("total_services", .double, .required)
             .field("total_materials", .double, .required)
+            .field("total_divers", .double, .required)
             .field("total", .double, .required)
             .field("reduction", .double, .required)
             .field("grand_total", .double, .required)

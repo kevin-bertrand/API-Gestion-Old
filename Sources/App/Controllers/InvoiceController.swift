@@ -61,6 +61,7 @@ struct InvoiceController: RouteCollection {
                           object: newInvoice.object,
                           totalServices: newInvoice.totalServices,
                           totalMaterials: newInvoice.totalMaterials,
+                          totalDivers: newInvoice.totalDivers,
                           total: newInvoice.total,
                           reduction: newInvoice.reduction,
                           grandTotal: newInvoice.grandTotal,
@@ -96,6 +97,7 @@ struct InvoiceController: RouteCollection {
             .set(\.$object, to: updatedInvoice.object)
             .set(\.$totalServices, to: updatedInvoice.totalServices)
             .set(\.$totalMaterials, to: updatedInvoice.totalMaterials)
+            .set(\.$totalDivers, to: updatedInvoice.totalDivers)
             .set(\.$total, to: updatedInvoice.total)
             .set(\.$reduction, to: updatedInvoice.reduction)
             .set(\.$grandTotal, to: updatedInvoice.grandTotal)
@@ -139,11 +141,13 @@ struct InvoiceController: RouteCollection {
             try await addToYearRevenue(year: year,
                                        totalServices: invoice.totalServices,
                                        totalMaterial: invoice.totalMaterials,
+                                       totalDivers: invoice.totalDivers,
                                        grandTotal: invoice.grandTotal, in: req)
             try await addToMonthRevenue(month: month,
                                         year: year,
                                         totalServices: invoice.totalServices,
                                         totalMaterial: invoice.totalMaterials,
+                                        totalDivers: invoice.totalDivers,
                                         grandTotal: invoice.grandTotal,
                                         in: req)
         } else {
@@ -188,6 +192,7 @@ struct InvoiceController: RouteCollection {
                                                        object: invoice.object,
                                                        totalServices: invoice.totalServices,
                                                        totalMaterials: invoice.totalMaterials,
+                                                       totalDivers: invoice.totalDivers,
                                                        total: invoice.total,
                                                        reduction: invoice.reduction,
                                                        grandTotal: invoice.grandTotal,
@@ -248,7 +253,7 @@ struct InvoiceController: RouteCollection {
     }
     
     /// Adding invoice to year revenue
-    private func addToYearRevenue(year: Int, totalServices: Double, totalMaterial: Double, grandTotal: Double, in req: Request) async throws {
+    private func addToYearRevenue(year: Int, totalServices: Double, totalMaterial: Double, totalDivers: Double, grandTotal: Double, in req: Request) async throws {
         if let record = try await YearRevenue.query(on: req.db).filter(\.$year == year).first() {
             try await YearRevenue.query(on: req.db)
                 .set(\.$totalServices, to: (record.totalServices + totalServices))
@@ -257,12 +262,12 @@ struct InvoiceController: RouteCollection {
                 .filter(\.$year == year)
                 .update()
         } else {
-            try await YearRevenue(year: year, totalServices: totalServices, totalMaterials: totalMaterial, grandTotal: grandTotal).save(on: req.db)
+            try await YearRevenue(year: year, totalServices: totalServices, totalMaterials: totalMaterial, totalDivers: totalDivers, grandTotal: grandTotal).save(on: req.db)
         }
     }
     
     /// Adding invoice to month revenue
-    private func addToMonthRevenue(month: Int, year: Int, totalServices: Double, totalMaterial: Double, grandTotal: Double, in req: Request) async throws {
+    private func addToMonthRevenue(month: Int, year: Int, totalServices: Double, totalMaterial: Double, totalDivers: Double, grandTotal: Double, in req: Request) async throws {
         if let record = try await MonthRevenue.query(on: req.db).filter(\.$year == year).filter(\.$month == month).first() {
             try await MonthRevenue.query(on: req.db)
                 .set(\.$totalServices, to: (record.totalServices + totalServices))
@@ -272,7 +277,7 @@ struct InvoiceController: RouteCollection {
                 .filter(\.$month == month)
                 .update()
         } else {
-            try await MonthRevenue(month: month, year: year, totalServices: totalServices, totalMaterials: totalMaterial, grandTotal: grandTotal).save(on: req.db)
+            try await MonthRevenue(month: month, year: year, totalServices: totalServices, totalMaterials: totalMaterial, totalDivers: totalDivers, grandTotal: grandTotal).save(on: req.db)
         }
     }
 }

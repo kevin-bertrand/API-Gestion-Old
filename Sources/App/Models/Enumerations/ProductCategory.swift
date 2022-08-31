@@ -8,5 +8,5 @@
 import Foundation
 
 enum ProductCategory: String, Codable, CaseIterable {
-    case material, service
+    case material, service, divers
 }

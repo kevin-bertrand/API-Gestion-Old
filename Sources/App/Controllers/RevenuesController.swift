@@ -29,7 +29,7 @@ struct RevenuesController: RouteCollection {
         if let revenues = try await YearRevenue.query(on: req.db).filter(\.$year == year).first() {
             return formatResponse(status: .ok, body: try encodeBody(revenues))
         } else {
-            return formatResponse(status: .ok, body: try encodeBody(YearRevenue(year: year, totalServices: 0, totalMaterials: 0, grandTotal: 0)))
+            return formatResponse(status: .ok, body: try encodeBody(YearRevenue(year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0)))
         }
     }
     
@@ -43,7 +43,7 @@ struct RevenuesController: RouteCollection {
         if let revenues = try await MonthRevenue.query(on: req.db).filter(\.$month == month).filter(\.$year == year).first() {
             return formatResponse(status: .ok, body: try encodeBody(revenues))
         } else {
-            return formatResponse(status: .ok, body: try encodeBody(MonthRevenue(month: month, year: year, totalServices: 0, totalMaterials: 0, grandTotal: 0)))
+            return formatResponse(status: .ok, body: try encodeBody(MonthRevenue(month: month, year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0)))
         }
     }
     

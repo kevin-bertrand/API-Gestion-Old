@@ -65,6 +65,7 @@ struct EstimateController: RouteCollection {
                            object: newEstimate.object,
                            totalServices: newEstimate.totalServices,
                            totalMaterials: newEstimate.totalMaterials,
+                           totalDivers: newEstimate.totalDivers,
                            total: newEstimate.total,
                            reduction: newEstimate.reduction,
                            grandTotal: newEstimate.grandTotal,
@@ -100,6 +101,7 @@ struct EstimateController: RouteCollection {
             .set(\.$object, to: updateEstimate.object)
             .set(\.$totalServices, to: updateEstimate.totalServices)
             .set(\.$totalMaterials, to: updateEstimate.totalMaterials)
+            .set(\.$totalDivers, to: updateEstimate.totalDivers)
             .set(\.$total, to: updateEstimate.total)
             .set(\.$reduction, to: updateEstimate.reduction)
             .set(\.$grandTotal, to: updateEstimate.grandTotal)
@@ -256,6 +258,7 @@ struct EstimateController: RouteCollection {
                                                          object: estimate.object,
                                                          totalServices: estimate.totalServices,
                                                          totalMaterials: estimate.totalMaterials,
+                                                         totalDivers: estimate.totalDivers,
                                                          total: estimate.total,
                                                          reduction: estimate.reduction,
                                                          grandTotal: estimate.grandTotal,
@@ -309,8 +312,10 @@ struct EstimateController: RouteCollection {
         
         let newInvoice = Invoice.Create(reference: reference,
                                         internalReference: estimate.internalReference,
-                                        object: estimate.object, totalServices: estimate.totalServices,
+                                        object: estimate.object,
+                                        totalServices: estimate.totalServices,
                                         totalMaterials: estimate.totalMaterials,
+                                        totalDivers: estimate.totalDivers,
                                         total: estimate.total,
                                         reduction: estimate.reduction,
                                         grandTotal: estimate.grandTotal,

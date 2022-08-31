@@ -16,6 +16,7 @@ struct YearRevenueMigration: AsyncMigration {
             .field("year", .int8, .required)
             .field("total_services", .double, .required)
             .field("total_materials", .double, .required)
+            .field("total_divers", .double, .required)
             .field("grand_total", .double, .required)
             .unique(on: "year")
             .create()

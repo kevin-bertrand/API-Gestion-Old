@@ -29,18 +29,22 @@ final class MonthRevenue: Model, Content {
     @Field(key: "total_materials")
     var totalMaterials: Double
     
+    @Field(key: "total_divers")
+    var totalDivers: Double
+    
     @Field(key: "grand_total")
     var grandTotal: Double
     
     // Initialization functions
     init() {}
     
-    init(id: UUID? = nil, month: Int, year: Int, totalServices: Double, totalMaterials: Double, grandTotal: Double) {
+    init(id: UUID? = nil, month: Int, year: Int, totalServices: Double, totalMaterials: Double, totalDivers: Double, grandTotal: Double) {
         self.id = id
         self.month = month
         self.year = year
         self.totalServices = totalServices
         self.totalMaterials = totalMaterials
+        self.totalDivers = totalDivers
         self.grandTotal = grandTotal
     }
 }

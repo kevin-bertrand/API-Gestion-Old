@@ -32,6 +32,9 @@ final class Estimate: Model, Content {
     @Field(key: "total_materials")
     var totalMaterials: Double
     
+    @Field(key: "total_divers")
+    var totalDivers: Double
+    
     @Field(key: "total")
     var total: Double
     
@@ -71,6 +74,7 @@ final class Estimate: Model, Content {
          object: String,
          totalServices: Double,
          totalMaterials: Double,
+         totalDivers: Double,
          total: Double,
          reduction: Double,
          grandTotal: Double,
@@ -84,6 +88,7 @@ final class Estimate: Model, Content {
         self.object = object
         self.totalServices = totalServices
         self.totalMaterials = totalMaterials
+        self.totalDivers = totalDivers
         self.total = total
         self.reduction = reduction
         self.grandTotal = grandTotal

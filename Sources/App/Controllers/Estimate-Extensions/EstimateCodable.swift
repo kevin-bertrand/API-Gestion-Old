@@ -14,6 +14,7 @@ extension Estimate {
         let object: String
         let totalServices: Double
         let totalMaterials: Double
+        let totalDivers: Double
         let total: Double
         let reduction: Double
         let grandTotal: Double
@@ -30,6 +31,7 @@ extension Estimate {
         let object: String
         let totalServices: Double
         let totalMaterials: Double
+        let totalDivers: Double
         let total: Double
         let reduction: Double
         let grandTotal: Double
@@ -55,6 +57,7 @@ extension Estimate {
         let object: String
         let totalServices: Double
         let totalMaterials: Double
+        let totalDivers: Double
         let total: Double
         let reduction: Double
         let grandTotal: Double

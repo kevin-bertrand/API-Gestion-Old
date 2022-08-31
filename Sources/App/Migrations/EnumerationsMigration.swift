@@ -55,6 +55,7 @@ struct EnumerationsMigration: AsyncMigration {
         _ = try await database.enum("product_category")
             .case("material")
             .case("service")
+            .case("divers")
             .create()
     }
     
