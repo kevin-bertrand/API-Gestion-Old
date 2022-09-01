@@ -5,6 +5,7 @@
 //  Created by Kevin Bertrand on 29/08/2022.
 //
 
+import Foundation
 import Fluent
 import Vapor
 
@@ -15,6 +16,7 @@ struct RevenuesController: RouteCollection {
         let tokenGroup = revenuesGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("year", ":year", use: getYearRevenue)
         tokenGroup.get("month", ":month", ":year", use: getMonthRevenue)
+        tokenGroup.get("allMonths", use: getAllMonthThisYear)
     }
     
     // MARK: Routes functions
@@ -45,6 +47,25 @@ struct RevenuesController: RouteCollection {
         } else {
             return formatResponse(status: .ok, body: try encodeBody(MonthRevenue(month: month, year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0)))
         }
+    }
+    
+    /// Get all month this year
+    private func getAllMonthThisYear(req: Request) async throws -> Response {
+        var revenues: [MonthRevenue] = []
+        let components = Calendar.current.dateComponents([.year], from: Date())
+        let year = components.year
+        
+        guard let year = year else { throw Abort(.internalServerError) }
+        
+        for month in 1...12 {
+            if let revenue = try await MonthRevenue.query(on: req.db).filter(\.$month == month).filter(\.$year == year).first() {
+                revenues.append(revenue)
+            } else {
+                revenues.append(MonthRevenue(id: UUID(uuid: UUID_NULL), month: month, year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0))
+            }
+        }
+    
+        return formatResponse(status: .ok, body: try encodeBody(revenues))
     }
     
     // MARK: Utilities functions

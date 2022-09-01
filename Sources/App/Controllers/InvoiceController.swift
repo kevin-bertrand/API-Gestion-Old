@@ -93,6 +93,8 @@ struct InvoiceController: RouteCollection {
             throw Abort(.notAcceptable)
         }
         
+        print(updatedInvoice.status)
+        
         try await Invoice.query(on: req.db)
             .set(\.$object, to: updatedInvoice.object)
             .set(\.$totalServices, to: updatedInvoice.totalServices)
@@ -150,8 +152,6 @@ struct InvoiceController: RouteCollection {
                                         totalDivers: invoice.totalDivers,
                                         grandTotal: invoice.grandTotal,
                                         in: req)
-        } else {
-            print("no")
         }
         
         return formatResponse(status: .ok, body: .empty)

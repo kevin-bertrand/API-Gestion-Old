@@ -8,5 +8,5 @@
 import Foundation
 
 enum Gender: String, Codable {
-case man, woman, notDetermined
+    case man, woman, notDetermined
 }

@@ -8,5 +8,5 @@
 import Foundation
 
 enum InvoiceStatus: String, Codable {
-case inCreation, sent, payed, overdue
+    case inCreation, sent, payed, overdue
 }
