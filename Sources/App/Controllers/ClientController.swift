@@ -82,8 +82,23 @@ struct ClientController: RouteCollection {
     private func getList(req: Request) async throws -> Response {
         let clients = try await Client.query(on: req.db)
             .all()
+        var processedClients: [Client.Informations] = []
         
-        return formatResponse(status: .ok, body: try encodeBody(clients))
+        for client in clients {
+            processedClients.append(Client.Informations(id: client.id,
+                                                        firstname: client.firstname,
+                                                        lastname: client.lastname,
+                                                        company: client.company,
+                                                        phone: client.phone,
+                                                        email: client.email,
+                                                        personType: client.personType,
+                                                        gender: client.gender,
+                                                        siret: client.siret,
+                                                        tva: client.tva,
+                                                        address: try await addressController.getAddressFromId(client.$address.id, for: req)))
+        }
+        
+        return formatResponse(status: .ok, body: try encodeBody(processedClients))
     }
     
     // MARK: Utilities functions

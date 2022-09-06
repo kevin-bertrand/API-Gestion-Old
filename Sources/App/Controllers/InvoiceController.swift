@@ -21,6 +21,7 @@ struct InvoiceController: RouteCollection {
         tokenGroup.post(use: create)
         tokenGroup.patch(use: update)
         tokenGroup.get(use: getList)
+        tokenGroup.get("filter", ":filter", use: getList)
         tokenGroup.get(":id", use: getInvoice)
     }
     
@@ -56,6 +57,9 @@ struct InvoiceController: RouteCollection {
     /// Create invoice
     private func create(req: Request) async throws -> Response {
         let newInvoice = try req.content.decode(Invoice.Create.self)
+        
+        print(newInvoice)
+        
         try await Invoice(reference: newInvoice.reference,
                           internalReference: newInvoice.internalReference,
                           object: newInvoice.object,
@@ -70,6 +74,7 @@ struct InvoiceController: RouteCollection {
                           clientID: newInvoice.clientID)
         .save(on: req.db)
         
+        print("ok")
         let invoice = try await Invoice.query(on: req.db)
             .filter(\.$reference == newInvoice.reference)
             .first()
@@ -158,11 +163,16 @@ struct InvoiceController: RouteCollection {
     }
     /// Getting invoice list
     private func getList(req: Request) async throws -> Response {
-        let invoices = try await Invoice.query(on: req.db)
-            .with(\.$client)
-            .all()
+        let filter = req.parameters.get("filter", as: Int.self)
+        let invoices: [Invoice.Summary]
         
-        return formatResponse(status: .ok, body: try encodeBody(formatInvoiceSummaray(invoices)))
+        if let filter = filter {
+            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db).with(\.$client).range(..<filter).all())
+        } else {
+            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db).with(\.$client).all())
+        }
+        
+        return formatResponse(status: .ok, body: try encodeBody(invoices))
     }
     
     /// Getting invoice
@@ -177,8 +187,9 @@ struct InvoiceController: RouteCollection {
         var products: [Product.Informations] = []
         
         for productInvoice in productsInvoice {
-            guard let product = try await Product.find(productInvoice.$product.id, on: req.db) else { throw Abort(.notAcceptable) }
-            products.append(Product.Informations(quantity: productInvoice.quantity,
+            guard let product = try await Product.find(productInvoice.$product.id, on: req.db), let productId = product.id else { throw Abort(.notAcceptable) }
+            products.append(Product.Informations(id: productId,
+                                                 quantity: productInvoice.quantity,
                                                  title: product.title,
                                                  unity: product.unity,
                                                  domain: product.domain,
@@ -198,7 +209,8 @@ struct InvoiceController: RouteCollection {
                                                        grandTotal: invoice.grandTotal,
                                                        status: invoice.status,
                                                        limitPayementDate: invoice.limitPayementDate,
-                                                       client: Client.Informations(firstname: client.firstname,
+                                                       client: Client.Informations(id: client.id,
+                                                                                   firstname: client.firstname,
                                                                                    lastname: client.lastname,
                                                                                    company: client.company,
                                                                                    phone: client.phone,

@@ -20,6 +20,7 @@ extension Product {
     }
     
     struct Informations: Codable {
+        let id: UUID
         let quantity: Double
         let title: String
         let unity: String?

@@ -9,6 +9,7 @@ import Foundation
 
 extension Client {
     struct Informations: Codable {
+        let id: UUID?
         let firstname: String?
         let lastname: String?
         let company: String?

@@ -60,6 +60,8 @@ struct EstimateController: RouteCollection {
     private func create(req: Request) async throws -> Response {
         let newEstimate = try req.content.decode(Estimate.Create.self)
         
+        guard newEstimate.reference != "" else { throw Abort(.notAcceptable)}
+        
         try await Estimate(reference: newEstimate.reference,
                            internalReference: newEstimate.internalReference,
                            object: newEstimate.object,
@@ -139,89 +141,16 @@ struct EstimateController: RouteCollection {
     
     /// Getting invoice list
     private func getList(req: Request) async throws -> Response {
-        let filters = req.parameters.get("filter")
+        let filters = req.parameters.get("filter", as: Int.self)
         
         let estimates: [Estimate.Summary]
         
         if let filters = filters {
-            let filters = filters.split(separator: "&")
-            var endDate: Date? = nil
-            var startDate: Date? = nil
-            var clientID: UUID? = nil
+            let estimatesCount = try await Estimate.query(on: req.db).count()
+            let min = (estimatesCount - filters) < 0 ? 0 : (estimatesCount - filters)
             
-            for filter in filters {
-                let filter = filter.split(separator: "=")
-                
-                if filter.count == 2 {
-                    switch filter[0] {
-                    case "client":
-                        if let id = UUID(uuidString: String(filter[1])) {
-                            clientID = id
-                        } else {
-                            throw Abort(.notAcceptable)
-                        }
-                    case "start":
-                        if let start = Double(filter[1])?.toDate {
-                            startDate = start
-                        } else {
-                            throw Abort(.notAcceptable)
-                        }
-                    case "end":
-                        if let end = Double(filter[1])?.toDate {
-                            endDate = end
-                        } else {
-                            throw Abort(.notAcceptable)
-                        }
-                    default:
-                        throw Abort(.notAcceptable)
-                    }
-                } else {
-                    throw Abort(.notAcceptable)
-                }
-            }
-            
-            if endDate != nil && startDate != nil && clientID != nil, let endDate = endDate, let startDate = startDate, let clientID = clientID {
-                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
-                    .filter(\.$client.$id == clientID)
-                    .filter(\.$creation >= startDate)
-                    .filter(\.$creation <= endDate)
-                    .with(\.$client)
-                    .all())
-            } else if endDate == nil && startDate != nil && clientID != nil, let startDate = startDate, let clientID = clientID {
-                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
-                    .filter(\.$client.$id == clientID)
-                    .filter(\.$creation >= startDate)
-                    .with(\.$client)
-                    .all())
-            } else if endDate != nil && startDate == nil && clientID != nil, let endDate = endDate, let clientID = clientID {
-                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
-                    .filter(\.$client.$id == clientID)
-                    .filter(\.$creation <= endDate)
-                    .with(\.$client)
-                    .all())
-            } else if endDate != nil && startDate != nil && clientID == nil, let endDate = endDate, let startDate = startDate {
-                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
-                    .filter(\.$creation >= startDate)
-                    .filter(\.$creation <= endDate)
-                    .with(\.$client)
-                    .all())
-            } else if endDate != nil && startDate == nil && clientID == nil, let endDate = endDate {
-                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
-                    .filter(\.$creation <= endDate)
-                    .all())
-            } else if endDate == nil && startDate == nil && clientID != nil, let clientID = clientID {
-                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
-                    .filter(\.$client.$id == clientID)
-                    .with(\.$client)
-                    .all())
-            } else if endDate == nil && startDate != nil && clientID == nil, let startDate = startDate {
-                estimates = formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db)
-                    .filter(\.$creation >= startDate)
-                    .with(\.$client)
-                    .all())
-            } else {
-                estimates = try await getAllEstimates(req: req)
-            }
+            estimates = formatEstimatesSummary(req: req,
+                                               estimates: try await Estimate.query(on: req.db).with(\.$client).range(min..<estimatesCount).all())
         } else {
             estimates = try await getAllEstimates(req: req)
         }
@@ -243,8 +172,9 @@ struct EstimateController: RouteCollection {
         var products: [Product.Informations] = []
         
         for productEstimate in productEstimates {
-            guard let product = try await Product.find(productEstimate.$product.id, on: req.db) else { throw Abort(.notAcceptable) }
-            products.append(Product.Informations(quantity: productEstimate.quantity,
+            guard let product = try await Product.find(productEstimate.$product.id, on: req.db), let productId = product.id else { throw Abort(.notAcceptable) }
+            products.append(Product.Informations(id: productId,
+                                                 quantity: productEstimate.quantity,
                                                  title: product.title,
                                                  unity: product.unity,
                                                  domain: product.domain,
@@ -265,7 +195,8 @@ struct EstimateController: RouteCollection {
                                                          status: estimate.status,
                                                          limitValidityDate: estimate.limitValidityDate,
                                                          isArchive: estimate.isArchive,
-                                                         client: Client.Informations(firstname: client.firstname,
+                                                         client: Client.Informations(id: client.id,
+                                                                                     firstname: client.firstname,
                                                                                      lastname: client.lastname,
                                                                                      company: client.company,
                                                                                      phone: client.phone,
@@ -334,6 +265,7 @@ struct EstimateController: RouteCollection {
         
         try await Estimate.query(on: req.db)
             .set(\.$isArchive, to: true)
+            .set(\.$status, to: .sent)
             .filter(\.$id == estimateId)
             .update()
         
