@@ -15,7 +15,7 @@ struct ClientController: RouteCollection {
     // MARK: Route initialisation
     func boot(routes: RoutesBuilder) throws {
         let clientGroup = routes.grouped("client")
-                
+        
         let tokenGroup = clientGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.post("add", use: create)
         tokenGroup.patch(":id", use: update)
@@ -32,16 +32,16 @@ struct ClientController: RouteCollection {
             throw Abort(.unauthorized)
         }
         
-        try await Client(firstname: newClient.firstname,
-                            lastname: newClient.lastname,
-                            company: newClient.company,
-                            phone: newClient.phone,
-                            email: newClient.email,
-                            personType: newClient.personType,
-                            gender: newClient.gender,
-                            siret: newClient.siret,
-                            tva: newClient.tva,
-                            addressID: try await addressController.create(newClient.address, for: req).requireID())
+        try await Client(firstname: newClient.firstname == "" ? nil : newClient.firstname,
+                         lastname: newClient.lastname == "" ? nil : newClient.lastname,
+                         company: newClient.company == "" ? nil : newClient.company,
+                         phone: newClient.phone,
+                         email: newClient.email,
+                         personType: newClient.personType,
+                         gender: newClient.gender,
+                         siret: newClient.siret == "" ? nil : newClient.siret,
+                         tva: newClient.tva == "" ? nil : newClient.tva,
+                         addressID: try await addressController.create(newClient.address, for: req).requireID())
         .save(on: req.db)
         
         return formatResponse(status: .created, body: .empty)
@@ -62,15 +62,15 @@ struct ClientController: RouteCollection {
         }
         
         try await Client.query(on: req.db)
-            .set(\.$firstname, to: updatedClient.firstname)
-            .set(\.$lastname, to: updatedClient.lastname)
-            .set(\.$company, to: updatedClient.company)
+            .set(\.$firstname, to: updatedClient.firstname == "" ? nil : updatedClient.firstname)
+            .set(\.$lastname, to: updatedClient.lastname == "" ? nil : updatedClient.lastname)
+            .set(\.$company, to: updatedClient.company == "" ? nil : updatedClient.company)
             .set(\.$phone, to: updatedClient.phone)
             .set(\.$email, to: updatedClient.email)
             .set(\.$personType, to: updatedClient.personType)
             .set(\.$gender, to: updatedClient.gender ?? .notDetermined)
-            .set(\.$siret, to: updatedClient.siret)
-            .set(\.$tva, to: updatedClient.tva)
+            .set(\.$siret, to: updatedClient.siret == "" ? nil : updatedClient.siret)
+            .set(\.$tva, to: updatedClient.tva == "" ? nil : updatedClient.tva)
             .set(\.$address.$id, to: try await addressController.create(updatedClient.address, for: req).requireID())
             .filter(\.$id == clientId)
             .update()
