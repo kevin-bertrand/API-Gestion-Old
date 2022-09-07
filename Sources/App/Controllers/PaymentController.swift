@@ -15,7 +15,7 @@ struct PaymentController: RouteCollection {
                 
         let tokenGroup = paymentGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.post("add", use: create)
-        tokenGroup.patch(":id", use: update)
+        tokenGroup.patch(use: update)
         tokenGroup.delete(":id", use: delete)
         tokenGroup.get(use: getList)
         tokenGroup.get(":id", use: getOne)
@@ -40,13 +40,12 @@ struct PaymentController: RouteCollection {
     private func update(req: Request) async throws -> Response {
         let userAuth = try getUserAuthFor(req)
         let updateMethod = try req.content.decode(PayementMethod.self)
-        let paymentID = req.parameters.get("id", as: UUID.self)
         
         guard userAuth.permissions == .admin else {
             throw Abort(.unauthorized)
         }
         
-        guard let paymentID = paymentID else {
+        guard let paymentID = updateMethod.id else {
             throw Abort(.notAcceptable)
         }
         
