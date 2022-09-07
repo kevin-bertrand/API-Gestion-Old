@@ -74,7 +74,6 @@ struct InvoiceController: RouteCollection {
                           clientID: newInvoice.clientID)
         .save(on: req.db)
         
-        print("ok")
         let invoice = try await Invoice.query(on: req.db)
             .filter(\.$reference == newInvoice.reference)
             .first()
