@@ -23,6 +23,7 @@ extension Invoice {
         let status: InvoiceStatus
         let limitPayementDate: Date?
         let clientID: UUID
+        let paymentID: UUID?
         let products: [Product.Create]
     }
     
@@ -39,6 +40,7 @@ extension Invoice {
         let grandTotal: Double
         let status: InvoiceStatus
         let limitPayementDate: Date?
+        let paymentID: UUID
         let products: [Product.Update]
     }
     
@@ -67,6 +69,7 @@ extension Invoice {
         let limitPayementDate: Date
         let client: Client.Informations
         let products: [Product.Informations]
+        let payment: PayementMethod?
         let isArchive: Bool
     }
 }

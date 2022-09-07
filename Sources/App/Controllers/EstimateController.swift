@@ -253,6 +253,7 @@ struct EstimateController: RouteCollection {
                                         status: .inCreation,
                                         limitPayementDate: nil,
                                         clientID: estimate.$client.id,
+                                        paymentID: nil,
                                         products: newInvoiceProducts)
         
         let addInvoiceResponse = try await req.client.post("http://\(serverIP):\(serverPort)/invoice",
@@ -265,7 +266,7 @@ struct EstimateController: RouteCollection {
         
         try await Estimate.query(on: req.db)
             .set(\.$isArchive, to: true)
-            .set(\.$status, to: .sent)
+            .set(\.$status, to: .accepted)
             .filter(\.$id == estimateId)
             .update()
         

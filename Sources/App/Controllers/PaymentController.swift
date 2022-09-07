@@ -18,6 +18,7 @@ struct PaymentController: RouteCollection {
         tokenGroup.patch(":id", use: update)
         tokenGroup.delete(":id", use: delete)
         tokenGroup.get(use: getList)
+        tokenGroup.get(":id", use: getOne)
     }
     
     // MARK: Routes functions
@@ -83,6 +84,17 @@ struct PaymentController: RouteCollection {
             .all()
         
         return formatResponse(status: .ok, body: try encodeBody(payments))
+    }
+    
+    /// Get one payment method
+    private func getOne(req: Request) async throws -> Response {
+        let paymentID = req.parameters.get("id", as: UUID.self)
+        
+        guard let payment = try await PayementMethod.find(paymentID, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        
+        return formatResponse(status: .ok, body: try encodeBody(payment))
     }
     
     // MARK: Utilities functions

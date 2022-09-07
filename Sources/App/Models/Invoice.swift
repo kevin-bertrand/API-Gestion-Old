@@ -59,6 +59,9 @@ final class Invoice: Model, Content {
     @Parent(key: "client_id")
     var client: Client
     
+    @OptionalParent(key: "payment_id")
+    var payment: PayementMethod?
+        
     @Siblings(through: ProductInvoice.self, from: \.$invoice, to: \.$product)
     public var products: [Product]
     
@@ -81,6 +84,7 @@ final class Invoice: Model, Content {
          status: InvoiceStatus,
          limitPayementDate: Date? = nil,
          clientID: Client.IDValue,
+         paymentID: PayementMethod.IDValue? = nil,
          isArchive: Bool = false) {
         self.id = id
         self.internalReference = internalReference
@@ -95,6 +99,7 @@ final class Invoice: Model, Content {
         self.status = status
         self.limitPayementDate = limitPayementDate ?? Date().addingTimeInterval(2592000)
         self.$client.id = clientID
+        self.$payment.id = paymentID
         self.isArchive = isArchive
     }
 }

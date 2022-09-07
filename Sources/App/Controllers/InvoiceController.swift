@@ -178,6 +178,8 @@ struct InvoiceController: RouteCollection {
     /// Getting invoice
     private func getInvoice(req: Request) async throws -> Response {
         let id = req.parameters.get("id", as: UUID.self)
+        let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
+        let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
         
         guard let id = id, let invoice = try await Invoice.find(id, on: req.db), let client = try await Client.find(invoice.$client.id, on: req.db) else {
             throw Abort(.notFound)
@@ -195,6 +197,20 @@ struct InvoiceController: RouteCollection {
                                                  domain: product.domain,
                                                  productCategory: product.productCategory,
                                                  price: product.price))
+        }
+        
+        let payment: PayementMethod?
+        
+        if let paymentID = invoice.$payment.id {
+            let paymentResponse = try await req.client.get("http://\(serverIP):\(serverPort)/payment/\(paymentID)", headers: req.headers)
+            
+            guard var paymentData = paymentResponse.body, let data = paymentData.readData(length: paymentData.readableBytes) else {
+                throw Abort(.internalServerError)
+            }
+            
+            payment = try JSONDecoder().decode(PayementMethod.self, from: data)
+        } else {
+            payment = nil
         }
         
         let invoiceInformations = Invoice.Informations(id: id,
@@ -221,6 +237,7 @@ struct InvoiceController: RouteCollection {
                                                                                    tva: client.tva,
                                                                                    address: try await addressController.getAddressFromId(client.$address.id, for: req)),
                                                        products: products,
+                                                       payment: payment,
                                                        isArchive: invoice.isArchive)
         
         return formatResponse(status: .ok, body: try encodeBody(invoiceInformations))

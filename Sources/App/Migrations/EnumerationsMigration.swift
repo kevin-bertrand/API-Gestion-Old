@@ -22,6 +22,7 @@ struct EnumerationsMigration: AsyncMigration {
             .case("sent")
             .case("refused")
             .case("late")
+            .case("accepted")
             .create()
         
         _ = try await database.enum("gender")

@@ -8,5 +8,5 @@
 import Foundation
 
 enum EstimateStatus: String, Codable {
-    case inCreation, sent, refused, late
+    case inCreation, sent, refused, late, accepted
 }

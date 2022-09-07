@@ -29,6 +29,7 @@ struct InvoiceMigration: AsyncMigration {
             .field("status", invoiceStatus, .required)
             .field("limit_payment_date", .date, .required)
             .field("client_id", .uuid, .required, .references(Client.schema, "id"))
+            .field("payment_id", .uuid, .references(PayementMethod.schema, "id"))
             .field("is_archive", .bool, .required)
             .unique(on: "reference")
             .create()
