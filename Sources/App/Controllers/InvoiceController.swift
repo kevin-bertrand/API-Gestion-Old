@@ -104,6 +104,7 @@ struct InvoiceController: RouteCollection {
             .set(\.$reduction, to: updatedInvoice.reduction)
             .set(\.$grandTotal, to: updatedInvoice.grandTotal)
             .set(\.$status, to: updatedInvoice.status)
+            .set(\.$payment.$id, to: updatedInvoice.paymentID)
             .set(\.$limitPayementDate, to: updatedInvoice.limitPayementDate ?? Date().addingTimeInterval(2592000))
             .set(\.$isArchive, to: updatedInvoice.status == .payed ? true : false)
             .filter(\.$reference == updatedInvoice.reference)
