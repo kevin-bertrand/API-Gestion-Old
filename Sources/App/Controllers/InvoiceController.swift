@@ -57,9 +57,7 @@ struct InvoiceController: RouteCollection {
     /// Create invoice
     private func create(req: Request) async throws -> Response {
         let newInvoice = try req.content.decode(Invoice.Create.self)
-        
-        print(newInvoice)
-        
+                
         try await Invoice(reference: newInvoice.reference,
                           internalReference: newInvoice.internalReference,
                           object: newInvoice.object,
@@ -96,8 +94,6 @@ struct InvoiceController: RouteCollection {
         guard let invoice = try await Invoice.find(updatedInvoice.id, on: req.db), !invoice.isArchive else {
             throw Abort(.notAcceptable)
         }
-        
-        print(updatedInvoice.status)
         
         try await Invoice.query(on: req.db)
             .set(\.$object, to: updatedInvoice.object)
