@@ -74,7 +74,6 @@ extension Invoice {
     }
     
     struct PDF: Codable {
-        let publicDir: String
         let creationDate: String
         let reference: String
         let clientName: String

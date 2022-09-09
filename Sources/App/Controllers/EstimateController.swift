@@ -21,6 +21,7 @@ struct EstimateController: RouteCollection {
         tokenGroup.get("list", use: getList)
         tokenGroup.get("list", ":filter", use: getList)
         tokenGroup.get(":id", use: getEstimate)
+        tokenGroup.get("pdf", ":id", use: pdf)
         tokenGroup.post("add", use: create)
         tokenGroup.patch(use: update)
         tokenGroup.post("toInvoice", ":reference", use: exportToInvoice)
@@ -271,6 +272,80 @@ struct EstimateController: RouteCollection {
             .update()
         
         return formatResponse(status: addInvoiceResponse.status, body: .init(buffer: responseBody))
+    }
+    
+    /// Generate a PDF from the Database for a selected ID
+    private func pdf(req: Request) async throws -> Response {
+        let document = Document(margins: 15)
+        let id = req.parameters.get("id", as: UUID.self)
+        guard let id = id, let estimate = try await Estimate.find(id, on: req.db), let client = try await Client.find(estimate.$client.id, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        
+        let productsEstimate = try await ProductEstimate.query(on: req.db).filter(\.$estimate.$id == id).all()
+        var products: [Product.Informations] = []
+        
+        for productEstimate in productsEstimate {
+            guard let product = try await Product.find(productEstimate.$product.id, on: req.db), let productId = product.id else { throw Abort(.notAcceptable) }
+            products.append(Product.Informations(id: productId,
+                                                 quantity: productEstimate.quantity,
+                                                 title: product.title,
+                                                 unity: product.unity,
+                                                 domain: product.domain,
+                                                 productCategory: product.productCategory,
+                                                 price: product.price))
+        }
+        
+        let address = try await addressController.getAddressFromId(client.$address.id, for: req)
+        
+        var clientName: String = ""
+        
+        if let firstname = client.firstname,
+           let lastname = client.lastname {
+            clientName = "\((client.gender  == .man ? "M. " : client.gender == .woman ? "Mme." : ""))\(firstname) \(lastname.uppercased())"
+        }
+        
+        if let company = client.company {
+            if !clientName.isEmpty {
+                clientName.append(" - ")
+            }
+            clientName.append(company)
+        }
+        
+        let materialsProducts = products.filter({$0.productCategory == .material}).map({ return [$0.title, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", $0.quantity.twoDigitPrecision, "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
+        let servicesProducts = products.filter({$0.productCategory == .service}).map({ return [$0.title, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", $0.quantity.twoDigitPrecision, "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
+        let diversProducts = products.filter({$0.productCategory == .divers}).map({ return [$0.title, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", $0.quantity.twoDigitPrecision, "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
+        
+        let page = req.view.render("estimate", Estimate.PDF(creationDate: (estimate.creation ?? Date()).formatted(date: .numeric, time: .omitted),
+                                                            reference: estimate.reference,
+                                                            clientName: clientName,
+                                                            clientAddress: "\(address.streetNumber) \(address.roadName)",
+                                                            clientCity: "\(address.zipCode), \(address.city) - \(address.country)",
+                                                            internalReference: estimate.internalReference,
+                                                            object: estimate.object,
+                                                            total: estimate.grandTotal.twoDigitPrecision,
+                                                            materialsProducts: materialsProducts,
+                                                            servicesProducts: servicesProducts,
+                                                            diversProducts: diversProducts,
+                                                            totalServices: estimate.totalServices.twoDigitPrecision,
+                                                            totalMaterials: estimate.totalMaterials.twoDigitPrecision,
+                                                            totalDivers: estimate.totalDivers.twoDigitPrecision,
+                                                            limitDate: estimate.limitValidityDate.formatted(date: .numeric, time: .omitted),
+                                                            tva: client.tva ?? "",
+                                                            siret: client.siret ?? "",
+                                                            hasTva: client.tva != nil,
+                                                            hasSiret: client.siret != nil))
+        
+        let pages = try [page]
+            .flatten(on: req.eventLoop)
+            .map { views in
+                views.map { Page($0.data) }
+            }.wait()
+        
+        document.pages = pages
+        let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop)
+        
+        return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(data: pdf))
     }
     
     // MARK: Utilities functions
