@@ -28,6 +28,10 @@
         padding: 5px;
     }
 
+    h4 {
+        font-weight: 2rem;
+    }
+
     /*
     Table styling
     */
@@ -79,7 +83,7 @@
             </div>
             <div class="col-6 text-end rightSection">
                 <div class="row bold">
-                    <h4>#(reference)</h4>
+                    <h2>#(reference)</h2>
                 </div>
                 <div class="row">
                     <h5>Date: #(creationDate)</h5>

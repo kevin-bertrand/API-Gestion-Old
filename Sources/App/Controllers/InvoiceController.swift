@@ -23,7 +23,7 @@ struct InvoiceController: RouteCollection {
         tokenGroup.get(use: getList)
         tokenGroup.get("filter", ":filter", use: getList)
         tokenGroup.get(":id", use: getInvoice)
-        invoiceGroup.get("pdf", ":id", use: pdf)
+        tokenGroup.get("pdf", ":id", use: pdf)
     }
     
     // MARK: Routes functions
@@ -268,19 +268,19 @@ struct InvoiceController: RouteCollection {
         
         let address = try await addressController.getAddressFromId(client.$address.id, for: req)
         
-        let payment: PayementMethod? = nil
+        let payment: PayementMethod?
         
-//        if let paymentID = invoice.$payment.id {
-//            let paymentResponse = try await req.client.get("http://\(serverIP):\(serverPort)/payment/\(paymentID)", headers: req.headers)
-//
-//            guard var paymentData = paymentResponse.body, let data = paymentData.readData(length: paymentData.readableBytes) else {
-//                throw Abort(.internalServerError)
-//            }
-//
-//            payment = try JSONDecoder().decode(PayementMethod.self, from: data)
-//        } else {
-//            payment = nil
-//        }
+        if let paymentID = invoice.$payment.id {
+            let paymentResponse = try await req.client.get("http://\(serverIP):\(serverPort)/payment/\(paymentID)", headers: req.headers)
+
+            guard var paymentData = paymentResponse.body, let data = paymentData.readData(length: paymentData.readableBytes) else {
+                throw Abort(.internalServerError)
+            }
+
+            payment = try JSONDecoder().decode(PayementMethod.self, from: data)
+        } else {
+            payment = nil
+        }
         
         var clientName: String = ""
         
