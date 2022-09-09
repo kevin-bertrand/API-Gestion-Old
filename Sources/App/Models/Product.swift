@@ -8,7 +8,7 @@
 import Fluent
 import Vapor
 
-final class Product: Model, Content {
+final class Product: Model, Content, Codable {
     // Name of the table
     static let schema: String = "product"
     

@@ -72,4 +72,30 @@ extension Invoice {
         let payment: PayementMethod?
         let isArchive: Bool
     }
+    
+    struct PDF: Codable {
+        let publicDir: String
+        let creationDate: String
+        let reference: String
+        let clientName: String
+        let clientAddress: String
+        let clientCity: String
+        let internalReference: String
+        let object: String
+        let paymentTitle: String
+        let iban: String
+        let bic: String
+        let total: String
+        let materialsProducts: [[String]]
+        let servicesProducts: [[String]]
+        let diversProducts: [[String]]
+        let totalServices: String
+        let totalMaterials: String
+        let totalDivers: String
+        let limitDate: String
+        let tva: String
+        let siret: String
+        let hasTva: Bool
+        let hasSiret: Bool
+    }
 }

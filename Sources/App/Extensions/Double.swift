@@ -11,4 +11,9 @@ extension Double {
     var toDate: Date? {
         return Date(timeIntervalSince1970: self)
     }
+    
+    /// Truncate a double to a two digits number
+    var twoDigitPrecision: String {
+        return String(format: "%.2f", self)
+    }
 }

@@ -1,6 +1,7 @@
 import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
+import Leaf
 import Vapor
 
 // configures your application
@@ -17,6 +18,12 @@ public func configure(_ app: Application) throws {
     } else {
         app.databases.use(.sqlite(.file("db.sqlite")), as: .sqlite)
     }
+    
+    // Configuring files middleware
+    app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
+    
+    // Leaf configuration
+    app.views.use(.leaf)
     
     // Server configuration
     app.http.server.configuration.hostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"

@@ -23,6 +23,7 @@ struct InvoiceController: RouteCollection {
         tokenGroup.get(use: getList)
         tokenGroup.get("filter", ":filter", use: getList)
         tokenGroup.get(":id", use: getInvoice)
+        invoiceGroup.get("pdf", ":id", use: pdf)
     }
     
     // MARK: Routes functions
@@ -57,7 +58,7 @@ struct InvoiceController: RouteCollection {
     /// Create invoice
     private func create(req: Request) async throws -> Response {
         let newInvoice = try req.content.decode(Invoice.Create.self)
-                
+        
         try await Invoice(reference: newInvoice.reference,
                           internalReference: newInvoice.internalReference,
                           object: newInvoice.object,
@@ -145,7 +146,8 @@ struct InvoiceController: RouteCollection {
                                        totalServices: invoice.totalServices,
                                        totalMaterial: invoice.totalMaterials,
                                        totalDivers: invoice.totalDivers,
-                                       grandTotal: invoice.grandTotal, in: req)
+                                       grandTotal: invoice.grandTotal,
+                                       in: req)
             try await addToMonthRevenue(month: month,
                                         year: year,
                                         totalServices: invoice.totalServices,
@@ -238,6 +240,103 @@ struct InvoiceController: RouteCollection {
         
         return formatResponse(status: .ok, body: try encodeBody(invoiceInformations))
     }
+    
+    private func pdf(req: Request) async throws -> Response {
+        let document = Document(margins: 15)
+        
+        let id = req.parameters.get("id", as: UUID.self)
+        let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
+        let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
+        
+        guard let id = id, let invoice = try await Invoice.find(id, on: req.db), let client = try await Client.find(invoice.$client.id, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        
+        let productsInvoice = try await ProductInvoice.query(on: req.db).filter(\.$invoice.$id == id).all()
+        var products: [Product.Informations] = []
+        
+        for productInvoice in productsInvoice {
+            guard let product = try await Product.find(productInvoice.$product.id, on: req.db), let productId = product.id else { throw Abort(.notAcceptable) }
+            products.append(Product.Informations(id: productId,
+                                                 quantity: productInvoice.quantity,
+                                                 title: product.title,
+                                                 unity: product.unity,
+                                                 domain: product.domain,
+                                                 productCategory: product.productCategory,
+                                                 price: product.price))
+        }
+        
+        let address = try await addressController.getAddressFromId(client.$address.id, for: req)
+        
+        let payment: PayementMethod? = nil
+        
+//        if let paymentID = invoice.$payment.id {
+//            let paymentResponse = try await req.client.get("http://\(serverIP):\(serverPort)/payment/\(paymentID)", headers: req.headers)
+//
+//            guard var paymentData = paymentResponse.body, let data = paymentData.readData(length: paymentData.readableBytes) else {
+//                throw Abort(.internalServerError)
+//            }
+//
+//            payment = try JSONDecoder().decode(PayementMethod.self, from: data)
+//        } else {
+//            payment = nil
+//        }
+        
+        var clientName: String = ""
+        
+        if let firstname = client.firstname,
+           let lastname = client.lastname {
+            clientName = "\((client.gender  == .man ? "M. " : client.gender == .woman ? "Mme." : ""))\(firstname) \(lastname.uppercased())"
+        }
+        
+        if let company = client.company {
+            if !clientName.isEmpty {
+                clientName.append(" - ")
+            }
+            clientName.append(company)
+        }
+        
+        let materialsProducts = products.filter({$0.productCategory == .material}).map({ return [$0.title, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", $0.quantity.twoDigitPrecision, "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
+        let servicesProducts = products.filter({$0.productCategory == .service}).map({ return [$0.title, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", $0.quantity.twoDigitPrecision, "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
+        let diversProducts = products.filter({$0.productCategory == .divers}).map({ return [$0.title, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", $0.quantity.twoDigitPrecision, "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
+        
+        
+        let page = req.view.render("invoice", Invoice.PDF(publicDir: req.application.directory.publicDirectory,
+                                                          creationDate: invoice.creation?.formatted(date: .numeric, time: .omitted) ?? "\(Date().formatted(date: .numeric, time: .omitted))",
+                                                          reference: invoice.reference,
+                                                          clientName: clientName,
+                                                          clientAddress: "\(address.streetNumber) \(address.roadName)",
+                                                          clientCity: "\(address.zipCode), \(address.city) - \(address.country)",
+                                                          internalReference: invoice.internalReference,
+                                                          object: invoice.object,
+                                                          paymentTitle: payment?.title ?? "",
+                                                          iban: payment?.iban ?? "",
+                                                          bic: payment?.bic ?? "",
+                                                          total: invoice.grandTotal.twoDigitPrecision,
+                                                          materialsProducts: materialsProducts,
+                                                          servicesProducts: servicesProducts,
+                                                          diversProducts: diversProducts,
+                                                          totalServices: invoice.totalServices.twoDigitPrecision,
+                                                          totalMaterials: invoice.totalMaterials.twoDigitPrecision,
+                                                          totalDivers: invoice.totalDivers.twoDigitPrecision,
+                                                          limitDate: invoice.limitPayementDate.formatted(date: .numeric, time: .omitted),
+                                                          tva: client.tva ?? "",
+                                                          siret: client.siret ?? "",
+                                                          hasTva: client.tva != nil,
+                                                          hasSiret: client.siret != nil))
+        
+        let pages = try [page]
+            .flatten(on: req.eventLoop)
+            .map { views in
+                views.map { Page($0.data) }
+            }.wait()
+        
+        document.pages = pages
+        let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop)
+        
+        return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(data: pdf))
+    }
+    
     // MARK: Utilities functions
     /// Getting the connected user
     private func getUserAuthFor(_ req: Request) throws -> Staff {
@@ -305,4 +404,9 @@ struct InvoiceController: RouteCollection {
             try await MonthRevenue(month: month, year: year, totalServices: totalServices, totalMaterials: totalMaterial, totalDivers: totalDivers, grandTotal: grandTotal).save(on: req.db)
         }
     }
+}
+
+struct WelcomeContext: Encodable {
+    var title: String
+    var numbers: [Int]
 }
