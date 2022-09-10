@@ -22,7 +22,7 @@ struct EstimateController: RouteCollection {
         tokenGroup.get("list", ":filter", use: getList)
         tokenGroup.get(":id", use: getEstimate)
         tokenGroup.get("pdf", ":id", use: pdf)
-        tokenGroup.post("add", use: create)
+        tokenGroup.post(use: create)
         tokenGroup.patch(use: update)
         tokenGroup.post("toInvoice", ":reference", use: exportToInvoice)
     }
@@ -166,7 +166,7 @@ struct EstimateController: RouteCollection {
         guard let id = id,
               let estimate = try await Estimate.find(id, on: req.db),
               let client = try await Client.find(estimate.$client.id, on: req.db) else {
-            throw Abort(.notAcceptable)
+            throw Abort(.notFound)
         }
         
         let productEstimates = try await ProductEstimate.query(on: req.db).filter(\.$estimate.$id == id).all()

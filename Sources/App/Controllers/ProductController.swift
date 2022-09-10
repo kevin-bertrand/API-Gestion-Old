@@ -14,7 +14,7 @@ struct ProductController: RouteCollection {
         let productGroup = routes.grouped("product")
                 
         let tokenGroup = productGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
-        tokenGroup.post("add", use: create)
+        tokenGroup.post(use: create)
         tokenGroup.patch(":id", use: update)
         tokenGroup.get(use: getList)
         tokenGroup.get(":params", use: getList)

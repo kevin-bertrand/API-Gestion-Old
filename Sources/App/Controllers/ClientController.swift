@@ -17,7 +17,7 @@ struct ClientController: RouteCollection {
         let clientGroup = routes.grouped("client")
         
         let tokenGroup = clientGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
-        tokenGroup.post("add", use: create)
+        tokenGroup.post(use: create)
         tokenGroup.patch(":id", use: update)
         tokenGroup.get(use: getList)
     }

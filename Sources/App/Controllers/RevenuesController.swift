@@ -24,9 +24,7 @@ struct RevenuesController: RouteCollection {
     private func getYearRevenue(req: Request) async throws -> Response {
         let year = req.parameters.get("year", as: Int.self)
         
-        guard let year = year else {
-            throw Abort(.notAcceptable)
-        }
+        guard let year = year else { throw Abort(.notAcceptable) }
         
         if let revenues = try await YearRevenue.query(on: req.db).filter(\.$year == year).first() {
             return formatResponse(status: .ok, body: try encodeBody(revenues))

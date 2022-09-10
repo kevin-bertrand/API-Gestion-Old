@@ -14,7 +14,7 @@ struct PaymentController: RouteCollection {
         let paymentGroup = routes.grouped("payment")
                 
         let tokenGroup = paymentGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
-        tokenGroup.post("add", use: create)
+        tokenGroup.post(use: create)
         tokenGroup.patch(use: update)
         tokenGroup.delete(":id", use: delete)
         tokenGroup.get(use: getList)

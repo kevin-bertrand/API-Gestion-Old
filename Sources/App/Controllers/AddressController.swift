@@ -34,13 +34,7 @@ struct AddressController {
     
         return address
     }
-    
-    /// Return an address with eventloop
-    func getAddressFromId(_ id: UUID?, for req: Request) -> EventLoopFuture<Address> {
-        return Address.find(id, on: req.db)
-            .unwrap(or: Abort(.badRequest))
-    }
-    
+        
     // MARK: Private
     /// Check if the address already exists
     private func checkIfAddressExists(_ address: Address, for req: Request) async throws -> Address? {
