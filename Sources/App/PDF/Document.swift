@@ -64,6 +64,7 @@ extension Document {
             var wkArgs: [String] = [
                 "--zoom", self.zoom,
                 "--quiet",
+                "--footer-center", "'[page]/[topage]'",
                 "-s", self.paperSize,
                 "-T", "\(self.topMargin)mm",
                 "-R", "\(self.rightMargin)mm",
@@ -111,6 +112,7 @@ extension Document {
             var wkArgs: [String] = [
                 "--zoom", self.zoom,
                 "--quiet",
+                "--footer-center", "Page [page]/[topage]",
                 "-s", self.paperSize,
                 "-T", "\(self.topMargin)mm",
                 "-R", "\(self.rightMargin)mm",
