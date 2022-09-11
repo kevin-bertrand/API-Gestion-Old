@@ -301,7 +301,7 @@ struct InvoiceController: RouteCollection {
         let diversProducts = products.filter({$0.productCategory == .divers}).map({ return [$0.title, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", $0.quantity.twoDigitPrecision, "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
         
         
-        let page = req.view.render("invoice", Invoice.PDF(creationDate: invoice.creation?.formatted(date: .numeric, time: .omitted) ?? "\(Date().formatted(date: .numeric, time: .omitted))",
+        let page = req.view.render("invoice", Invoice.PDF(creationDate: (invoice.creation ?? Date()).dateOnly,
                                                           reference: invoice.reference,
                                                           clientName: clientName,
                                                           clientAddress: "\(address.streetNumber) \(address.roadName)",
@@ -318,7 +318,7 @@ struct InvoiceController: RouteCollection {
                                                           totalServices: invoice.totalServices.twoDigitPrecision,
                                                           totalMaterials: invoice.totalMaterials.twoDigitPrecision,
                                                           totalDivers: invoice.totalDivers.twoDigitPrecision,
-                                                          limitDate: invoice.limitPayementDate.formatted(date: .numeric, time: .omitted),
+                                                          limitDate: invoice.limitPayementDate.dateOnly,
                                                           tva: client.tva ?? "",
                                                           siret: client.siret ?? "",
                                                           hasTva: client.tva != nil,

@@ -316,7 +316,7 @@ struct EstimateController: RouteCollection {
         let servicesProducts = products.filter({$0.productCategory == .service}).map({ return [$0.title, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", $0.quantity.twoDigitPrecision, "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
         let diversProducts = products.filter({$0.productCategory == .divers}).map({ return [$0.title, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", $0.quantity.twoDigitPrecision, "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
         
-        let page = req.view.render("estimate", Estimate.PDF(creationDate: (estimate.creation ?? Date()).formatted(date: .numeric, time: .omitted),
+        let page = req.view.render("estimate", Estimate.PDF(creationDate: (estimate.creation ?? Date()).dateOnly,
                                                             reference: estimate.reference,
                                                             clientName: clientName,
                                                             clientAddress: "\(address.streetNumber) \(address.roadName)",
@@ -330,7 +330,7 @@ struct EstimateController: RouteCollection {
                                                             totalServices: estimate.totalServices.twoDigitPrecision,
                                                             totalMaterials: estimate.totalMaterials.twoDigitPrecision,
                                                             totalDivers: estimate.totalDivers.twoDigitPrecision,
-                                                            limitDate: estimate.limitValidityDate.formatted(date: .numeric, time: .omitted),
+                                                            limitDate: estimate.limitValidityDate.dateOnly,
                                                             tva: client.tva ?? "",
                                                             siret: client.siret ?? "",
                                                             hasTva: client.tva != nil,
