@@ -26,11 +26,13 @@ struct RevenuesController: RouteCollection {
         
         guard let year = year else { throw Abort(.notAcceptable) }
         
-        if let revenues = try await YearRevenue.query(on: req.db).filter(\.$year == year).first() {
-            return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(revenues)))
-        } else {
-            return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(YearRevenue(year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0))))
-        }
+//        if let revenues = try await YearRevenue.query(on: req.db).filter(\.$year == year).first() {
+//            return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(revenues)))
+//        } else {
+//
+//        }
+        
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(YearRevenue(year: year, totalServices: 0, totalMaterials: 1250, totalDivers: 0, grandTotal: 1250))))
     }
     
     /// Get month revenue
