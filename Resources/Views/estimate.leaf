@@ -33,10 +33,14 @@
     }
 
     h2 {
-        font-size: 20px;
+        font-size: 15px;
     }
 
     h5 {
+        font-size: 12px;
+    }
+    
+    .addresses {
         font-size: 15px;
     }
 
@@ -103,7 +107,7 @@
             </div>
         </div>
         
-        <div class="row justify-content-between section align-items-center">
+        <div class="row justify-content-between section align-items-center addresses">
             <div class="col-5">
                 <div class="bold">
                     Desyntic<br/>
