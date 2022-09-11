@@ -338,9 +338,11 @@ struct EstimateController: RouteCollection {
         
         let pages = try [page]
             .flatten(on: req.eventLoop)
-            .map { views in
-                views.map { Page($0.data) }
-            }.wait()
+            .map({ views in
+                views.map { view in
+                    Page(view.data)
+                }
+            }).wait()
         
         document.pages = pages
         let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop, title: estimate.reference)
