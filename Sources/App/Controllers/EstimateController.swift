@@ -362,7 +362,7 @@ struct EstimateController: RouteCollection {
     }
     
     /// Encode body
-    private func encodeBody(_ body: Codable) throws -> Response.Body {
+    private func encodeBody(_ body: Encodable) throws -> Response.Body {
         return .init(data: try JSONEncoder().encode(body))
     }
     
