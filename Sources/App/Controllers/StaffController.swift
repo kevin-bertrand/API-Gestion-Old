@@ -26,6 +26,7 @@ struct StaffController: RouteCollection {
         tokenGroup.get(":id", use: getStaffInfo)
         tokenGroup.patch(use: update)
         tokenGroup.patch("password", use: updatePassword)
+        tokenGroup.patch("picture", use: updateProfilePicture)
     }
     
     // MARK: Routes functions
@@ -36,6 +37,7 @@ struct StaffController: RouteCollection {
         let token = try await generateToken(for: userAuth, in: req)
         
         let staffInformations = Staff.Connected(id: try userAuth.requireID(),
+                                                profilePicture: userAuth.profilePicture,
                                                 firstname: userAuth.firstname,
                                                 lastname: userAuth.lastname,
                                                 phone: userAuth.phone,
@@ -144,6 +146,7 @@ struct StaffController: RouteCollection {
         let token = try await generateToken(for: userAuth, in: req)
         
         let staffInformations = Staff.Connected(id: user.id,
+                                                profilePicture: userAuth.profilePicture,
                                                 firstname: user.firstname,
                                                 lastname: user.lastname,
                                                 phone: user.phone,
@@ -177,6 +180,38 @@ struct StaffController: RouteCollection {
             .update()
         
         return formatResponse(status: .ok, body: .empty)
+    }
+    
+    /// Update profile picture
+    private func updateProfilePicture(req: Request) async throws -> Response {
+        let file = try req.content.decode(File.self)
+        guard let fileExtension = file.extension else { throw Abort(.badRequest) }
+        let userAuth = try getUserAuthFor(req)
+        
+        guard let userId = userAuth.id else { throw Abort(.unauthorized) }
+        
+        let path = "/var/www/html/Gestion/Public//\(userId).\(fileExtension)"
+        try await req.fileio.writeFile(file.data, at: path)
+        
+        try await Staff.query(on: req.db)
+            .filter(\.$id == userId)
+            .set(\.$profilePicture, to: path)
+            .update()
+        
+        let udpatedStaff = Staff.Connected(id: userId,
+                                           profilePicture: path,
+                                           firstname: userAuth.firstname,
+                                           lastname: userAuth.lastname,
+                                           phone: userAuth.phone,
+                                           email: userAuth.email,
+                                           gender: userAuth.gender,
+                                           position: userAuth.position,
+                                           role: userAuth.role,
+                                           token: try userAuth.generateToken().value,
+                                           permissions: userAuth.permissions,
+                                           address: try await addressController.getAddressFromId(userAuth.$address.id, for: req))
+        
+        return formatResponse(status: .ok, body: try encodeBody(udpatedStaff))
     }
     
     // MARK: Utilities functions

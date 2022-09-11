@@ -22,6 +22,7 @@ extension Staff {
     
     struct Connected: Codable {
         let id: UUID
+        let profilePicture: String?
         let firstname: String
         let lastname: String
         let phone: String

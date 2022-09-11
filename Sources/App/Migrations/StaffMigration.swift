@@ -17,6 +17,7 @@ struct StaffMigration: AsyncMigration {
         
         try await database.schema(Staff.schema)
             .id()
+            .field("profile_picture", .string)
             .field("firstname", .string, .required)
             .field("lastname", .string, .required)
             .field("phone", .string, .required)

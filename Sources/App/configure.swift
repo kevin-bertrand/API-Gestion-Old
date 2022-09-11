@@ -6,6 +6,9 @@ import Vapor
 
 // configures your application
 public func configure(_ app: Application) throws {
+    /// config max upload file size
+    app.routes.defaultMaxBodySize = "10mb"
+    
     // Configure DB
     if app.environment == .production {
         app.databases.use(.postgres(

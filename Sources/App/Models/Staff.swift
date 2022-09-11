@@ -17,6 +17,9 @@ final class Staff: Model, Content {
     var id: UUID?
     
     // Fields
+    @OptionalField(key: "profile_picture")
+    var profilePicture: String?
+    
     @Field(key: "firstname")
     var firstname: String
     
@@ -51,6 +54,7 @@ final class Staff: Model, Content {
     init() {}
     
     init(id: UUID? = nil,
+         profilePicture: String? = nil,
          firstname: String,
          lastname: String,
          phone: String,
@@ -62,6 +66,7 @@ final class Staff: Model, Content {
          permissions: Permissions,
          addressID: Address.IDValue) {
         self.id = id
+        self.profilePicture = profilePicture
         self.firstname = firstname
         self.lastname = lastname
         self.phone = phone
