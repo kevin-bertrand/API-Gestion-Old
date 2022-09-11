@@ -8,7 +8,20 @@
 import Foundation
 
 extension Staff {
+    struct Update: Codable {
+        let id: UUID
+        let firstname: String
+        let lastname: String
+        let phone: String
+        let email: String
+        let gender: Gender
+        let position: Position
+        let role: String
+        let address: Address
+    }
+    
     struct Connected: Codable {
+        let id: UUID
         let firstname: String
         let lastname: String
         let phone: String

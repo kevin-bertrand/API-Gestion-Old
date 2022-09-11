@@ -100,7 +100,7 @@ extension Document {
         }
     }
     
-    public func generatePDF(on threadPool: NIOThreadPool, eventLoop: EventLoop) async throws -> Data {
+    public func generatePDF(on threadPool: NIOThreadPool, eventLoop: EventLoop, title: String) async throws -> Data {
         return try threadPool.runIfActive(eventLoop: eventLoop) {
             let fileManager = FileManager.default
 
@@ -112,7 +112,8 @@ extension Document {
             var wkArgs: [String] = [
                 "--zoom", self.zoom,
                 "--quiet",
-                "--footer-center", "Page [page]/[topage]",
+                "--footer-center", "\(title) - Page [page]/[topage]",
+                "--title", title,
                 "-s", self.paperSize,
                 "-T", "\(self.topMargin)mm",
                 "-R", "\(self.rightMargin)mm",

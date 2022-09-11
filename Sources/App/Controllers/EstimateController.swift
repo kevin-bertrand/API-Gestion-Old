@@ -343,7 +343,7 @@ struct EstimateController: RouteCollection {
             }.wait()
         
         document.pages = pages
-        let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop)
+        let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop, title: estimate.reference)
         
         return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(data: pdf))
     }

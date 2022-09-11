@@ -24,6 +24,7 @@ struct StaffController: RouteCollection {
         tokenGroup.delete(":id", use: delete)
         tokenGroup.get(use: getList)
         tokenGroup.get(":id", use: getStaffInfo)
+        tokenGroup.patch(use: update)
     }
     
     // MARK: Routes functions
@@ -33,16 +34,17 @@ struct StaffController: RouteCollection {
         
         let token = try await generateToken(for: userAuth, in: req)
         
-        let staffInformations = Staff.Connected(firstname: userAuth.firstname,
-                                            lastname: userAuth.lastname,
-                                            phone: userAuth.phone,
-                                            email: userAuth.email,
-                                            gender: userAuth.gender,
-                                            position: userAuth.position,
-                                            role: userAuth.role,
-                                            token: token.value,
-                                            permissions: userAuth.permissions,
-                                            address: try await addressController.getAddressFromId(userAuth.$address.id, for: req))
+        let staffInformations = Staff.Connected(id: try userAuth.requireID(),
+                                                firstname: userAuth.firstname,
+                                                lastname: userAuth.lastname,
+                                                phone: userAuth.phone,
+                                                email: userAuth.email,
+                                                gender: userAuth.gender,
+                                                position: userAuth.position,
+                                                role: userAuth.role,
+                                                token: token.value,
+                                                permissions: userAuth.permissions,
+                                                address: try await addressController.getAddressFromId(userAuth.$address.id, for: req))
         
         return formatResponse(status: .ok, body: try encodeBody(staffInformations))
     }
@@ -68,7 +70,7 @@ struct StaffController: RouteCollection {
                         passwordHash: try Bcrypt.hash(try verifyPassword(password: receivedData.password, passwordVerification: receivedData.passwordVerification)),
                         permissions: receivedData.permissions,
                         addressID: try addressID.requireID())
-            .save(on: req.db)
+        .save(on: req.db)
         
         return formatResponse(status: .created, body: .empty)
     }
@@ -116,6 +118,42 @@ struct StaffController: RouteCollection {
         
         let staffInformations = Staff.Information(firstname: staff.firstname, lastname: staff.lastname, phone: staff.phone, email: staff.email, gender: staff.gender, position: staff.position, role: staff.role, permissions: staff.permissions, address: try await addressController.getAddressFromId(staff.$address.id, for: req))
         
+        return formatResponse(status: .ok, body: try encodeBody(staffInformations))
+    }
+    
+    /// Update staff information
+    private func update(req: Request) async throws -> Response {
+        let userAuth = try getUserAuthFor(req)
+        let user = try req.content.decode(Staff.Update.self)
+        
+        let updatedAddress = try await addressController.create(user.address, for: req)
+        
+        try await Staff.query(on: req.db)
+            .set(\.$gender, to: user.gender)
+            .set(\.$firstname, to: user.firstname)
+            .set(\.$lastname, to: user.lastname)
+            .set(\.$email, to: user.email)
+            .set(\.$phone, to: user.phone)
+            .set(\.$role, to: user.role)
+            .set(\.$position, to: user.position)
+            .set(\.$address.$id, to: try updatedAddress.requireID())
+            .filter(\.$id == user.id)
+            .update()
+        
+        let token = try await generateToken(for: userAuth, in: req)
+        
+        let staffInformations = Staff.Connected(id: user.id,
+                                                firstname: user.firstname,
+                                                lastname: user.lastname,
+                                                phone: user.phone,
+                                                email: user.email,
+                                                gender: user.gender,
+                                                position: user.position,
+                                                role: user.role,
+                                                token: token.value,
+                                                permissions: userAuth.permissions,
+                                                address: updatedAddress)
+                
         return formatResponse(status: .ok, body: try encodeBody(staffInformations))
     }
     
