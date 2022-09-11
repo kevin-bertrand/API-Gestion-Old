@@ -140,7 +140,7 @@ struct EstimateController: RouteCollection {
         return formatResponse(status: .ok, body: .empty)
     }
     
-    /// Getting invoice list
+    /// Getting estimate list
     private func getList(req: Request) async throws -> Response {
         let filters = req.parameters.get("filter", as: Int.self)
         

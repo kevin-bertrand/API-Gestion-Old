@@ -89,7 +89,7 @@ extension Document {
             // Call wkhtmltopdf and retrieve the result data
             let wk = Process()
             let stdout = Pipe()
-            wk.executableURL = URL(string: self.launchPath)
+            wk.launchPath = self.launchPath
             wk.arguments = wkArgs
             wk.arguments?.append("-") // output to stdout
             wk.standardOutput = stdout
