@@ -59,4 +59,11 @@ extension Staff {
         let permissions: Permissions
         let address: Address
     }
+    
+    struct UpdatePassword: Codable {
+        let id: UUID
+        let oldPassword: String
+        let newPassword: String
+        let newPasswordVerification: String
+    }
 }

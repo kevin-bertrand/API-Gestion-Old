@@ -25,6 +25,7 @@ struct StaffController: RouteCollection {
         tokenGroup.get(use: getList)
         tokenGroup.get(":id", use: getStaffInfo)
         tokenGroup.patch(use: update)
+        tokenGroup.patch("password", use: updatePassword)
     }
     
     // MARK: Routes functions
@@ -155,6 +156,27 @@ struct StaffController: RouteCollection {
                                                 address: updatedAddress)
                 
         return formatResponse(status: .ok, body: try encodeBody(staffInformations))
+    }
+    
+    /// Update staff password
+    private func updatePassword(req: Request) async throws -> Response {
+        let userAuth = try getUserAuthFor(req)
+        let updatePassword = try req.content.decode(Staff.UpdatePassword.self)
+        
+        guard let userId = userAuth.id, userId == updatePassword.id else {
+            throw Abort(.unauthorized)
+        }
+        
+        guard try userAuth.verify(password: updatePassword.oldPassword) else {
+            throw Abort(.custom(code: 460, reasonPhrase: "The old password is not correct!"))
+        }
+        
+        try await Staff.query(on: req.db)
+            .set(\.$passwordHash, to: try Bcrypt.hash(try verifyPassword(password: updatePassword.newPassword, passwordVerification: updatePassword.newPasswordVerification)))
+            .filter(\.$id == userId)
+            .update()
+        
+        return formatResponse(status: .ok, body: .empty)
     }
     
     // MARK: Utilities functions
