@@ -59,7 +59,7 @@ struct RevenuesController: RouteCollection {
             if let revenue = try await MonthRevenue.query(on: req.db).filter(\.$month == month).filter(\.$year == year).first() {
                 revenues.append(revenue)
             } else {
-                revenues.append(MonthRevenue(id: UUID(uuid: UUID_NULL), month: month, year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0))
+                revenues.append(MonthRevenue(id: UUID().empty, month: month, year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0))
             }
         }
     
