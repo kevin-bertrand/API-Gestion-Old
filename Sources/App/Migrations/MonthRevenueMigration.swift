@@ -13,8 +13,8 @@ struct MonthRevenueMigration: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database.schema(MonthRevenue.schema)
             .id()
-            .field("month", .int8, .required)
-            .field("year", .int8, .required)
+            .field("month", .int32, .required)
+            .field("year", .int32, .required)
             .field("total_services", .double, .required)
             .field("total_materials", .double, .required)
             .field("total_divers", .double, .required)

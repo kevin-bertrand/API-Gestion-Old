@@ -13,7 +13,7 @@ struct YearRevenueMigration: AsyncMigration {
     func prepare(on database: Database) async throws {
         try await database.schema(YearRevenue.schema)
             .id()
-            .field("year", .int8, .required)
+            .field("year", .int32, .required)
             .field("total_services", .double, .required)
             .field("total_materials", .double, .required)
             .field("total_divers", .double, .required)
