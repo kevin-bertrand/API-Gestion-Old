@@ -198,6 +198,8 @@ struct StaffController: RouteCollection {
             .set(\.$profilePicture, to: path)
             .update()
         
+        let token = try await generateToken(for: userAuth, in: req)
+        
         let udpatedStaff = Staff.Connected(id: userId,
                                            profilePicture: path,
                                            firstname: userAuth.firstname,
@@ -207,7 +209,7 @@ struct StaffController: RouteCollection {
                                            gender: userAuth.gender,
                                            position: userAuth.position,
                                            role: userAuth.role,
-                                           token: try userAuth.generateToken().value,
+                                           token: token.value,
                                            permissions: userAuth.permissions,
                                            address: try await addressController.getAddressFromId(userAuth.$address.id, for: req))
         
