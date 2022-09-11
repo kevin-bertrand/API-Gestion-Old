@@ -190,7 +190,7 @@ struct StaffController: RouteCollection {
         
         guard let userId = userAuth.id else { throw Abort(.unauthorized) }
         
-        let path = "/var/www/html/Gestion/Public//\(userId).\(fileExtension)"
+        let path = "/var/www/html/Gestion/Public/\(userId).\(fileExtension)"
         try await req.fileio.writeFile(file.data, at: path)
         
         try await Staff.query(on: req.db)
