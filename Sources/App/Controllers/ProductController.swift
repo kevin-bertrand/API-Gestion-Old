@@ -27,14 +27,14 @@ struct ProductController: RouteCollection {
     private func getCategories(req: Request) async throws -> Response {
         let categories = ProductCategory.allCases
         
-        return formatResponse(status: .ok, body: try encodeBody(categories))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(categories)))
     }
     
     /// Get domains
     private func getDomains(req: Request) async throws -> Response {
         let domains = Domain.allCases
         
-        return formatResponse(status: .ok, body: try encodeBody(domains))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(domains)))
     }
     
     /// Create product
@@ -133,7 +133,7 @@ struct ProductController: RouteCollection {
             products = try await getAllProducts(req: req)
         }
         
-        return formatResponse(status: .ok, body: try encodeBody(products))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(products)))
     }
     
     // MARK: Utilities functions
@@ -147,11 +147,6 @@ struct ProductController: RouteCollection {
         var headers = HTTPHeaders()
         headers.add(name: .contentType, value: "application/json")
         return .init(status: status, headers: headers, body: body)
-    }
-    
-    /// Encode body
-    private func encodeBody(_ body: any Encodable) throws -> Response.Body {
-        return .init(data: try JSONEncoder().encode(body))
     }
     
     /// Get all product list

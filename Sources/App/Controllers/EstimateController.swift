@@ -54,7 +54,7 @@ struct EstimateController: RouteCollection {
             }
         }
         
-        return formatResponse(status: .ok, body: try encodeBody("D-\(date)-\(number)"))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode("D-\(date)-\(number)")))
     }
     
     /// Create
@@ -156,7 +156,7 @@ struct EstimateController: RouteCollection {
             estimates = try await getAllEstimates(req: req)
         }
         
-        return formatResponse(status: .ok, body: try encodeBody(estimates))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(estimates)))
     }
     
     /// Get estimate
@@ -209,7 +209,7 @@ struct EstimateController: RouteCollection {
                                                                                      address: try await addressController.getAddressFromId(client.$address.id, for: req)),
                                                          products: products)
         
-        return formatResponse(status: .ok, body: try encodeBody(estimateInformations))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(estimateInformations)))
     }
     
     /// Export estimate to invoice
@@ -359,11 +359,6 @@ struct EstimateController: RouteCollection {
         var headers = HTTPHeaders()
         headers.add(name: .contentType, value: "application/json")
         return .init(status: status, headers: headers, body: body)
-    }
-    
-    /// Encode body
-    private func encodeBody(_ body: any Encodable) throws -> Response.Body {
-        return .init(data: try JSONEncoder().encode(body))
     }
     
     /// Getting all estimates

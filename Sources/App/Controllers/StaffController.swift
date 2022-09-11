@@ -49,7 +49,7 @@ struct StaffController: RouteCollection {
                                                 permissions: userAuth.permissions,
                                                 address: try await addressController.getAddressFromId(userAuth.$address.id, for: req))
         
-        return formatResponse(status: .ok, body: try encodeBody(staffInformations))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staffInformations)))
     }
     
     /// Create user
@@ -106,7 +106,7 @@ struct StaffController: RouteCollection {
         let staff = try await Staff.query(on: req.db)
             .all()
         
-        return formatResponse(status: .ok, body: try encodeBody(staff))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staff)))
     }
     
     /// Get one staff info
@@ -121,7 +121,7 @@ struct StaffController: RouteCollection {
         
         let staffInformations = Staff.Information(firstname: staff.firstname, lastname: staff.lastname, phone: staff.phone, email: staff.email, gender: staff.gender, position: staff.position, role: staff.role, permissions: staff.permissions, address: try await addressController.getAddressFromId(staff.$address.id, for: req))
         
-        return formatResponse(status: .ok, body: try encodeBody(staffInformations))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staffInformations)))
     }
     
     /// Update staff information
@@ -158,7 +158,7 @@ struct StaffController: RouteCollection {
                                                 permissions: userAuth.permissions,
                                                 address: updatedAddress)
                 
-        return formatResponse(status: .ok, body: try encodeBody(staffInformations))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staffInformations)))
     }
     
     /// Update staff password
@@ -211,7 +211,7 @@ struct StaffController: RouteCollection {
                                            permissions: userAuth.permissions,
                                            address: try await addressController.getAddressFromId(userAuth.$address.id, for: req))
         
-        return formatResponse(status: .ok, body: try encodeBody(udpatedStaff))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(udpatedStaff)))
     }
     
     // MARK: Utilities functions
@@ -233,12 +233,7 @@ struct StaffController: RouteCollection {
         headers.add(name: .contentType, value: "application/json")
         return .init(status: status, headers: headers, body: body)
     }
-    
-    /// Encode body
-    private func encodeBody(_ body: any Encodable) throws -> Response.Body {
-        return .init(data: try JSONEncoder().encode(body))
-    }
-    
+        
     /// Verify password
     private func verifyPassword(password: String, passwordVerification: String) throws -> String {
         guard password == passwordVerification else {

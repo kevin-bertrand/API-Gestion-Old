@@ -98,7 +98,7 @@ struct ClientController: RouteCollection {
                                                         address: try await addressController.getAddressFromId(client.$address.id, for: req)))
         }
         
-        return formatResponse(status: .ok, body: try encodeBody(processedClients))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(processedClients)))
     }
     
     // MARK: Utilities functions
@@ -112,10 +112,5 @@ struct ClientController: RouteCollection {
         var headers = HTTPHeaders()
         headers.add(name: .contentType, value: "application/json")
         return .init(status: status, headers: headers, body: body)
-    }
-    
-    /// Encode body
-    private func encodeBody(_ body: any Encodable) throws -> Response.Body {
-        return .init(data: try JSONEncoder().encode(body))
     }
 }

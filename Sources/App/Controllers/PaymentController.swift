@@ -82,7 +82,7 @@ struct PaymentController: RouteCollection {
         let payments = try await PayementMethod.query(on: req.db)
             .all()
         
-        return formatResponse(status: .ok, body: try encodeBody(payments))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(payments)))
     }
     
     /// Get one payment method
@@ -93,7 +93,7 @@ struct PaymentController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        return formatResponse(status: .ok, body: try encodeBody(payment))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(payment)))
     }
     
     // MARK: Utilities functions
@@ -107,10 +107,5 @@ struct PaymentController: RouteCollection {
         var headers = HTTPHeaders()
         headers.add(name: .contentType, value: "application/json")
         return .init(status: status, headers: headers, body: body)
-    }
-    
-    /// Encode body
-    private func encodeBody(_ body: any Encodable) throws -> Response.Body {
-        return .init(data: try JSONEncoder().encode(body))
     }
 }

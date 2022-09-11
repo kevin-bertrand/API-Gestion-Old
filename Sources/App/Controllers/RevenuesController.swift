@@ -27,9 +27,9 @@ struct RevenuesController: RouteCollection {
         guard let year = year else { throw Abort(.notAcceptable) }
         
         if let revenues = try await YearRevenue.query(on: req.db).filter(\.$year == year).first() {
-            return formatResponse(status: .ok, body: try encodeBody(revenues))
+            return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(revenues)))
         } else {
-            return formatResponse(status: .ok, body: try encodeBody(YearRevenue(year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0)))
+            return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(YearRevenue(year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0))))
         }
     }
     
@@ -41,9 +41,9 @@ struct RevenuesController: RouteCollection {
         guard let year = year, let month = month else { throw Abort(.notAcceptable) }
         
         if let revenues = try await MonthRevenue.query(on: req.db).filter(\.$month == month).filter(\.$year == year).first() {
-            return formatResponse(status: .ok, body: try encodeBody(revenues))
+            return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(revenues)))
         } else {
-            return formatResponse(status: .ok, body: try encodeBody(MonthRevenue(month: month, year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0)))
+            return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(MonthRevenue(month: month, year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0))))
         }
     }
     
@@ -63,7 +63,7 @@ struct RevenuesController: RouteCollection {
             }
         }
     
-        return formatResponse(status: .ok, body: try encodeBody(revenues))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(revenues)))
     }
     
     // MARK: Utilities functions
@@ -72,10 +72,5 @@ struct RevenuesController: RouteCollection {
         var headers = HTTPHeaders()
         headers.add(name: .contentType, value: "application/json")
         return .init(status: status, headers: headers, body: body)
-    }
-    
-    /// Encode body
-    private func encodeBody(_ body: any Encodable) throws -> Response.Body {
-        return .init(data: try JSONEncoder().encode(body))
     }
 }

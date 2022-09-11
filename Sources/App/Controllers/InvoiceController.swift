@@ -52,7 +52,7 @@ struct InvoiceController: RouteCollection {
             }
         }
         
-        return formatResponse(status: .ok, body: try encodeBody("F-\(date)-\(number)"))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode("F-\(date)-\(number)")))
     }
     
     /// Create invoice
@@ -85,7 +85,7 @@ struct InvoiceController: RouteCollection {
             try await ProductInvoice(quantity: product.quantity, productID: product.productID, invoiceID: invoiceId).save(on: req.db)
         }
         
-        return formatResponse(status: .created, body: try encodeBody("\(invoice.reference) is created!"))
+        return formatResponse(status: .created, body: .init(data: try JSONEncoder().encode("\(invoice.reference) is created!")))
     }
     
     /// Update invoice
@@ -170,7 +170,7 @@ struct InvoiceController: RouteCollection {
             invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db).with(\.$client).all())
         }
         
-        return formatResponse(status: .ok, body: try encodeBody(invoices))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(invoices)))
     }
     
     /// Getting invoice
@@ -238,7 +238,7 @@ struct InvoiceController: RouteCollection {
                                                        payment: payment,
                                                        isArchive: invoice.isArchive)
         
-        return formatResponse(status: .ok, body: try encodeBody(invoiceInformations))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(invoiceInformations)))
     }
     
     private func pdf(req: Request) async throws -> Response {
@@ -347,11 +347,6 @@ struct InvoiceController: RouteCollection {
         var headers = HTTPHeaders()
         headers.add(name: .contentType, value: "application/json")
         return .init(status: status, headers: headers, body: body)
-    }
-    
-    /// Encode body
-    private func encodeBody(_ body: any Encodable) throws -> Response.Body {
-        return .init(data: try JSONEncoder().encode(body))
     }
     
     /// Format invoice summary
