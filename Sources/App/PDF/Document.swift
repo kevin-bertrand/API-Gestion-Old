@@ -64,6 +64,7 @@ extension Document {
                 "--zoom", self.zoom,
                 "--quiet",
                 "--footer-center", "\(title) - Page [page]/[topage]",
+                "--footer-font-size", "8",
                 "--title", title,
                 "-s", self.paperSize,
                 "-T", "\(self.topMargin)mm",
