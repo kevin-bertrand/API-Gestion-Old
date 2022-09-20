@@ -37,6 +37,7 @@ extension Estimate {
         let grandTotal: Double
         let status: EstimateStatus
         let limitValidifyDate: Date?
+        let creationDate: Date?
         let products: [Product.Update]
     }
     
@@ -63,6 +64,7 @@ extension Estimate {
         let grandTotal: Double
         let status: EstimateStatus
         let limitValidityDate: Date
+        let creationDate: Date?
         let isArchive: Bool
         let client: Client.Informations
         let products: [Product.Informations]

@@ -109,6 +109,7 @@ struct EstimateController: RouteCollection {
             .set(\.$reduction, to: updateEstimate.reduction)
             .set(\.$grandTotal, to: updateEstimate.grandTotal)
             .set(\.$status, to: updateEstimate.status)
+            .set(\.$creation, to: updateEstimate.creationDate)
             .set(\.$limitValidityDate, to: updateEstimate.limitValidifyDate ?? Date().addingTimeInterval(2592000))
             .filter(\.$reference == updateEstimate.reference)
             .update()
@@ -195,6 +196,7 @@ struct EstimateController: RouteCollection {
                                                          grandTotal: estimate.grandTotal,
                                                          status: estimate.status,
                                                          limitValidityDate: estimate.limitValidityDate,
+                                                         creationDate: estimate.creation,
                                                          isArchive: estimate.isArchive,
                                                          client: Client.Informations(id: client.id,
                                                                                      firstname: client.firstname,
