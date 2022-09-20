@@ -303,7 +303,7 @@ struct InvoiceController: RouteCollection {
         let diversProducts = products.filter({$0.productCategory == .divers}).map({ return [$0.title, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", $0.quantity.twoDigitPrecision, "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
         
         
-        let page = req.view.render("invoice", Invoice.PDF(creationDate: (invoice.creation ?? Date()).dateOnly,
+        let page = req.view.render("invoice", Invoice.PDF(creationDate: Date().dateOnly,
                                                           reference: invoice.reference,
                                                           clientName: clientName,
                                                           clientAddress: "\(address.streetNumber) \(address.roadName)",
