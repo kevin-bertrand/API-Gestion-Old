@@ -2,6 +2,8 @@ import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
 import Leaf
+import Queues
+import QueuesRedisDriver
 import Vapor
 
 // configures your application
@@ -32,6 +34,11 @@ public func configure(_ app: Application) throws {
     app.http.server.configuration.hostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
     app.http.server.configuration.port = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
 
+    // Configure jobs
+    try app.queues.use(.redis(url: "redis://127.0.0.1:6379"))
+    app.queues.schedule(InvoiceStatusJob())
+        .minutely()
+    
     // Migrations
     app.migrations.add(EnumerationsMigration())
     app.migrations.add(PayementMethodMigration())

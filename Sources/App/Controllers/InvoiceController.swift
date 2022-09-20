@@ -147,9 +147,7 @@ struct InvoiceController: RouteCollection {
             .filter(\.$id == paiedInvoice)
             .update()
         
-        if let invoice = try await Invoice.find(paiedInvoice, on: req.db), invoice.isArchive == true {
-            let reference = invoice.reference.split(separator: "-")
-            
+        if let invoice = try await Invoice.find(paiedInvoice, on: req.db), invoice.isArchive == true {            
             let date = Date()
             let yearDateFormatter = DateFormatter()
             let monthDateFormatter = DateFormatter()
