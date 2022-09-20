@@ -19,6 +19,7 @@ struct InvoiceController: RouteCollection {
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
         tokenGroup.post(use: create)
+        tokenGroup.patch("paied", ":id", use: isPaied)
         tokenGroup.patch(use: update)
         tokenGroup.get(use: getList)
         tokenGroup.get("filter", ":filter", use: getList)
@@ -108,7 +109,6 @@ struct InvoiceController: RouteCollection {
             .set(\.$creation, to: updatedInvoice.creationDate)
             .set(\.$payment.$id, to: updatedInvoice.paymentID)
             .set(\.$limitPayementDate, to: updatedInvoice.limitPayementDate ?? Date().addingTimeInterval(2592000))
-            .set(\.$isArchive, to: updatedInvoice.status == .payed ? true : false)
             .filter(\.$reference == updatedInvoice.reference)
             .update()
         
@@ -134,12 +134,30 @@ struct InvoiceController: RouteCollection {
             }
         }
         
-        if let invoice = try await Invoice.find(updatedInvoice.id, on: req.db), invoice.isArchive == true {
+        return formatResponse(status: .ok, body: .empty)
+    }
+    
+    /// Setting is payed
+    private func isPaied(req: Request) async throws -> Response {
+        guard let paiedInvoice = req.parameters.get("id", as: UUID.self) else { throw Abort(.notAcceptable) }
+        
+        try await Invoice.query(on: req.db)
+            .set(\.$status, to: .payed)
+            .set(\.$isArchive, to: true)
+            .filter(\.$id == paiedInvoice)
+            .update()
+        
+        if let invoice = try await Invoice.find(paiedInvoice, on: req.db), invoice.isArchive == true {
             let reference = invoice.reference.split(separator: "-")
             
-            guard reference.count == 3,
-                  let year = Int(String(reference[1].dropLast(2))),
-                  let month = Int(String(reference[1].dropFirst(4))) else {
+            let date = Date()
+            let yearDateFormatter = DateFormatter()
+            let monthDateFormatter = DateFormatter()
+            yearDateFormatter.dateFormat = "yyyy"
+            monthDateFormatter.dateFormat = "MM"
+            
+            guard let year = Int(yearDateFormatter.string(from: date)),
+                  let month = Int(monthDateFormatter.string(from: date)) else {
                 throw Abort(.internalServerError)
             }
             
@@ -160,6 +178,7 @@ struct InvoiceController: RouteCollection {
         
         return formatResponse(status: .ok, body: .empty)
     }
+    
     /// Getting invoice list
     private func getList(req: Request) async throws -> Response {
         let filter = req.parameters.get("filter", as: Int.self)
