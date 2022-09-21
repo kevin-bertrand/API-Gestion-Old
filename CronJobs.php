@@ -6,11 +6,14 @@
   Created by Kevin Bertrand on 21/09/2022.
 */
 
-$dbHost = getenv('DATABASE_HOST');
-$dbPort = getenv('DATABASE_PORT');
-$dbUser = getenv('DATABASE_USERNAME');
-$dbPassword = getenv('DATABASE_PASSWORD');
-$dbName = getenv('DATABASE_NAME');
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
+$dbHost = $_ENV['DATABASE_HOST'];
+$dbPort = $_ENV['DATABASE_PORT'];
+$dbUser = $_ENV['DATABASE_USERNAME'];
+$dbPassword = $_ENV['DATABASE_PASSWORD'];
+$dbName = $_ENV['DATABASE_NAME'];
 
 $dbconn = pg_connect("host=" . $dbHost . " port=" . $dbPort . " dbname=" . $dbName . " user=" . $dbUser . " password=" . $dbPassword)
     or die('Could not connect: ' . pg_last_error());
