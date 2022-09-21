@@ -12,6 +12,14 @@ DATABASE_NAME = config('DATABASE_NAME')
 conn = psycopg2.connect("host=%s port=%s dbname=%s user=%s password=%s" % (DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, DATABASE_USERNAME, DATABASE_PASSWORD))
 print(conn)
 
+# Open a cursor to send SQL Commands
+cur = conn.cursor()
+
+# Select all invoices
+sql = "SELECT * FROM invoice WHERE status=\"sent\";"
+cur.execute(sql)
+print(cur.fetchall())
+
 # Close connection
 conn.close()
 print(conn)
