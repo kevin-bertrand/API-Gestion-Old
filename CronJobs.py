@@ -24,17 +24,13 @@ cur = conn.cursor()
 ###############################################
 ## Functions
 ###############################################
-# Get formated date
-def GetFormatedDate(date):
-    date = date.split('/')
-    return datetime.datetime(date[2], date[1], date[0])
-
 # Update invoice
-def UpdateInvoice(reference, limit):
+def UpdateDocument(table, status, reference, limit):
     today = date.today()
 
     if today < limit:
-        sql = ("UPDATE invoice SET status = 'overdue' WHERE reference = '%s';" % (reference))
+        sql = ("UPDATE %s SET status = '%s' WHERE reference = '%s';" % (table, status, reference))
+        cur.execute(sql)
 
 # Select all invoices
 def SelectInvoices():
@@ -43,18 +39,21 @@ def SelectInvoices():
     invoices = cur.fetchall()
 
     for invoice in invoices:
-        UpdateInvoice(invoice[1], invoice[13])
+        UpdateDocument("invoice", "overdue", invoice[1], invoice[13])
 
+# Select all estimates
+def SelectEstimates():
+    sql = "SELECT * FROM estimate WHERE status='sent';"
+    cur.execute(sql)
+    estiamtes = cur.fetchall()
+
+    for estiamtes in estiamtes:
+        UpdateDocument("estimate", "late", estiamte[1], invoice[13])
 
 
 ###############################################
 ## Main
 ###############################################
 SelectInvoices()
-
+SelectEstimates()
 conn.close()
-
-
-        
-# Close connection
-
