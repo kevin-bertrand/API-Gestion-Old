@@ -2,8 +2,6 @@ import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
 import Leaf
-import Queues
-import QueuesRedisDriver
 import Vapor
 
 // configures your application
@@ -50,20 +48,7 @@ public func configure(_ app: Application) throws {
     
     // Add default administrator user
     app.migrations.add(DefaultAdministratorMigration())
-    
-    // Configure jobs
-    app.redis.configuration = try RedisConfiguration(hostname: "127.0.0.1",
-                                                     port: 2575,
-                                                     password: "eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81",
-                                                     pool: .init(connectionRetryTimeout: .seconds(1)))
-    try app.queues.use(.redis(url: "redis://127.0.0.1:2575"))
-    app.queues.schedule(InvoiceStatusJob())
-        .minutely()
-        .at(0)
-    
-    try app.queues.startInProcessJobs()
-    try app.queues.startScheduledJobs()
-    
+        
     // register routes
     try routes(app)
 }
