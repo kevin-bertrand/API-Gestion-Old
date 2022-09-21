@@ -55,7 +55,7 @@ public func configure(_ app: Application) throws {
     app.redis.configuration = try RedisConfiguration(hostname: "127.0.0.1",
                                                      port: 2575,
                                                      password: "eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81",
-                                                     pool: .init(connectionRetryTimeout: .milliseconds(60)))
+                                                     pool: .init(connectionRetryTimeout: .seconds(1)))
     try app.queues.use(.redis(url: "redis://127.0.0.1:2575"))
     app.queues.schedule(InvoiceStatusJob())
         .minutely()
