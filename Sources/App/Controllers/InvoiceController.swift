@@ -397,11 +397,16 @@ struct InvoiceController: RouteCollection {
             try await YearRevenue.query(on: req.db)
                 .set(\.$totalServices, to: (record.totalServices + totalServices))
                 .set(\.$totalMaterials, to: (record.totalMaterials + totalMaterial))
+                .set(\.$totalDivers, to: (record.totalDivers + totalDivers))
                 .set(\.$grandTotal, to: (record.grandTotal + grandTotal))
                 .filter(\.$year == year)
                 .update()
         } else {
-            try await YearRevenue(year: year, totalServices: totalServices, totalMaterials: totalMaterial, totalDivers: totalDivers, grandTotal: grandTotal).save(on: req.db)
+            try await YearRevenue(year: year,
+                                  totalServices: totalServices,
+                                  totalMaterials: totalMaterial,
+                                  totalDivers: totalDivers,
+                                  grandTotal: grandTotal).save(on: req.db)
         }
     }
     
@@ -411,12 +416,18 @@ struct InvoiceController: RouteCollection {
             try await MonthRevenue.query(on: req.db)
                 .set(\.$totalServices, to: (record.totalServices + totalServices))
                 .set(\.$totalMaterials, to: (record.totalMaterials + totalMaterial))
+                .set(\.$totalDivers, to: (record.totalDivers + totalDivers))
                 .set(\.$grandTotal, to: (record.grandTotal + grandTotal))
                 .filter(\.$year == year)
                 .filter(\.$month == month)
                 .update()
         } else {
-            try await MonthRevenue(month: month, year: year, totalServices: totalServices, totalMaterials: totalMaterial, totalDivers: totalDivers, grandTotal: grandTotal).save(on: req.db)
+            try await MonthRevenue(month: month,
+                                   year: year,
+                                   totalServices: totalServices,
+                                   totalMaterials: totalMaterial,
+                                   totalDivers: totalDivers,
+                                   grandTotal: grandTotal).save(on: req.db)
         }
     }
 }

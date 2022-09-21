@@ -33,14 +33,6 @@ public func configure(_ app: Application) throws {
     // Server configuration
     app.http.server.configuration.hostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
     app.http.server.configuration.port = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
-
-    // Configure jobs
-    try app.queues.use(.redis(url: "redis://127.0.0.1:6379"))
-    app.queues.schedule(InvoiceStatusJob())
-        .minutely()
-    
-    try app.queues.startInProcessJobs()
-    try app.queues.startScheduledJobs()
     
     // Migrations
     app.migrations.add(EnumerationsMigration())
@@ -58,6 +50,20 @@ public func configure(_ app: Application) throws {
     
     // Add default administrator user
     app.migrations.add(DefaultAdministratorMigration())
+    
+    // Configure jobs
+//
+    let configuration = try RedisConfiguration(hostname: "127.0.0.1",
+                                               port: 6379,
+                                               password: "eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81",
+                                               pool: .init(connectionRetryTimeout: .milliseconds(60)))
+    app.queues.use(.redis(configuration))
+    app.queues.schedule(InvoiceStatusJob())
+        .minutely()
+        .at(0)
+    
+    try app.queues.startInProcessJobs()
+    try app.queues.startScheduledJobs()
     
     // register routes
     try routes(app)

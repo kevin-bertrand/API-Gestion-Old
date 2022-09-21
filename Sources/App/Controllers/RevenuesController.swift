@@ -12,6 +12,7 @@ import Vapor
 struct RevenuesController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let revenuesGroup = routes.grouped("revenues")
+        revenuesGroup.get("add", use: addYearRevenue)
         
         let tokenGroup = revenuesGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("year", ":year", use: getYearRevenue)
@@ -20,6 +21,11 @@ struct RevenuesController: RouteCollection {
     }
     
     // MARK: Routes functions
+    private func addYearRevenue(req: Request) async throws -> Response {
+        
+        return formatResponse(status: .ok, body: .empty)
+    }
+    
     /// Get year revenue
     private func getYearRevenue(req: Request) async throws -> Response {
         let year = req.parameters.get("year", as: Int.self)
