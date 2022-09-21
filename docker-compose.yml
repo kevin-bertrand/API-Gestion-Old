@@ -34,7 +34,7 @@ services:
     image: redis:latest
     restart: always
     ports:
-      - '6379:6379'
+      - '6380:6380'
     command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81 --hostname 127.0.0.1
     volumes:
       - cache:/data
