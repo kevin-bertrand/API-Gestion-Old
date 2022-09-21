@@ -10,8 +10,8 @@ DATABASE_NAME = config('DATABASE_NAME')
 
 # Connect to the Database
 conn = psycopg2.connect("host=%s port=%s dbname=%s user=%s password=%s" % (DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, DATABASE_USERNAME, DATABASE_PASSWORD))
-print(con)
+print(conn)
 
 # Close connection
 conn.close()
-print(con)
+print(conn)
