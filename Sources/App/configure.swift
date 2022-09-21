@@ -54,7 +54,7 @@ public func configure(_ app: Application) throws {
     // Configure jobs
 //
     let configuration = try RedisConfiguration(hostname: "127.0.0.1",
-                                               port: 6379,
+                                               port: 6380,
                                                password: "eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81",
                                                pool: .init(connectionRetryTimeout: .milliseconds(60)))
     app.queues.use(.redis(configuration))
