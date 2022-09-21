@@ -39,6 +39,9 @@ public func configure(_ app: Application) throws {
     app.queues.schedule(InvoiceStatusJob())
         .minutely()
     
+    try app.queues.startInProcessJobs()
+    try app.queues.startScheduledJobs()
+    
     // Migrations
     app.migrations.add(EnumerationsMigration())
     app.migrations.add(PayementMethodMigration())
