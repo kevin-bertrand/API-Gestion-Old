@@ -13,7 +13,7 @@ $dbPassword = getenv('DATABASE_PASSWORD');
 $dbName = getenv('DATABASE_NAME');
 
 $dbconn = pg_connect("host=$dbHost port=$dbPort dbname=$dbName user=$dbUser password=$dbPassword")
-    or die('Could not connect: ' . pg_last_error()),
+    or die('Could not connect: ' . pg_last_error());
 
 echo "ok";
 ?>
