@@ -33,7 +33,7 @@ def GetFormatedDate(date):
 def UpdateInvoice(reference, limit):
     today = date.today()
 
-    if today < GetFormatedDate(limit):
+    if today < limit:
         print("ok")
     else:
         print("not ok")
