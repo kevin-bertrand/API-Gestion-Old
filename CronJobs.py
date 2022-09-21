@@ -18,8 +18,14 @@ cur = conn.cursor()
 # Select all invoices
 sql = "SELECT * FROM invoice WHERE status='sent';"
 cur.execute(sql)
-print(cur.fetchall())
+invoices = cur.fetchall()
 
+for invoice in invoices:
+    reference = invoice[1]
+    limit = invoice[13]
+    print(reference)
+    print(limit)
+        
 # Close connection
 conn.close()
 print(conn)
