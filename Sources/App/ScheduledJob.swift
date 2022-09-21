@@ -12,6 +12,7 @@ import Vapor
 
 struct InvoiceStatusJob: AsyncScheduledJob {
     func run(context: QueueContext) async throws {
+        print("ok")
         try await checkInvoiceStatus(on: context.application.db)
     }
     

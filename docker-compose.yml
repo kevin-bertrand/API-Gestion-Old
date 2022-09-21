@@ -34,8 +34,8 @@ services:
     image: redis:latest
     restart: always
     ports:
-      - '6380:6380'
-    command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81 --hostname 127.0.0.1
+      - '2575:2575'
+    command: redis-server --save 20 1 --loglevel warning --requirepass eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
     volumes:
       - cache:/data
   app:
@@ -45,7 +45,7 @@ services:
     environment:
       <<: *shared_environment
       REDIS_HOST: cache
-      REDIS_PORT: 6379
+      REDIS_PORT: 2575
       REDIS_PASSWORD: eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
     depends_on:
       - db
