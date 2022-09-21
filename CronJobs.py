@@ -34,9 +34,7 @@ def UpdateInvoice(reference, limit):
     today = date.today()
 
     if today < limit:
-        print("ok")
-    else:
-        print("not ok")
+        sql = ("UPDATE invoice SET status = 'overdue' WHERE reference = '%s';" % (reference))
 
 # Select all invoices
 def SelectInvoices():
