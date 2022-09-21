@@ -16,7 +16,7 @@ print(conn)
 cur = conn.cursor()
 
 # Select all invoices
-sql = "SELECT * FROM invoice WHERE status=\"sent\";"
+sql = "SELECT * FROM invoice WHERE status='sent';"
 cur.execute(sql)
 print(cur.fetchall())
 
