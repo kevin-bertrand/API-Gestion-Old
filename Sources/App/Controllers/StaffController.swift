@@ -24,6 +24,7 @@ struct StaffController: RouteCollection {
         tokenGroup.delete(":id", use: delete)
         tokenGroup.get(use: getList)
         tokenGroup.get(":id", use: getStaffInfo)
+        tokenGroup.get(":image", ":extension", use: getProfilePicture)
         tokenGroup.patch(use: update)
         tokenGroup.patch("password", use: updatePassword)
         tokenGroup.patch("picture", use: updateProfilePicture)
@@ -195,7 +196,7 @@ struct StaffController: RouteCollection {
         
         try await Staff.query(on: req.db)
             .filter(\.$id == userId)
-            .set(\.$profilePicture, to: path)
+            .set(\.$profilePicture, to: "\(userId)/\(fileExtension)")
             .update()
         
         let token = try await generateToken(for: userAuth, in: req)
@@ -214,6 +215,18 @@ struct StaffController: RouteCollection {
                                            address: try await addressController.getAddressFromId(userAuth.$address.id, for: req))
         
         return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(udpatedStaff)))
+    }
+    
+    /// Getting profile picture
+    private func getProfilePicture(req: Request) async throws -> Response {
+        guard let image = req.parameters.get("image"),
+              let imageExtension = req.parameters.get("extension") else {
+            throw Abort(.notAcceptable)
+        }
+        
+        let downloadedImage = try await req.fileio.collectFile(at: "/var/www/html/Gestion/Public/\(image).\(imageExtension)")
+        
+        return formatResponse(status: .ok, body: .init(buffer: downloadedImage))
     }
     
     // MARK: Utilities functions
