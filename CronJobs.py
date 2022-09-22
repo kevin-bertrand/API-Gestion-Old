@@ -56,4 +56,5 @@ def SelectEstimates():
 ###############################################
 SelectInvoices()
 SelectEstimates()
+conn.commit()
 conn.close()
