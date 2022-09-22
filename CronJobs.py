@@ -45,10 +45,10 @@ def SelectInvoices():
 def SelectEstimates():
     sql = "SELECT * FROM estimate WHERE status='sent';"
     cur.execute(sql)
-    estiamtes = cur.fetchall()
+    estimates = cur.fetchall()
 
-    for estiamtes in estiamtes:
-        UpdateDocument("estimate", "late", estiamte[1], invoice[13])
+    for estimate in estimates:
+        UpdateDocument("estimate", "late", estimate[1], estimate[13])
 
 
 ###############################################
