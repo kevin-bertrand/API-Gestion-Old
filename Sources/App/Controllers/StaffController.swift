@@ -24,7 +24,7 @@ struct StaffController: RouteCollection {
         tokenGroup.delete(":id", use: delete)
         tokenGroup.get(use: getList)
         tokenGroup.get(":id", use: getStaffInfo)
-        tokenGroup.get(":image", ":extension", use: getProfilePicture)
+        tokenGroup.get("picture", ":image", ":extension", use: getProfilePicture)
         tokenGroup.patch(use: update)
         tokenGroup.patch("password", use: updatePassword)
         tokenGroup.patch("picture", use: updateProfilePicture)
