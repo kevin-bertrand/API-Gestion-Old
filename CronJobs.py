@@ -28,7 +28,7 @@ cur = conn.cursor()
 def UpdateDocument(table, status, reference, limit):
     today = date.today()
 
-    if today < limit:
+    if today > limit:
         sql = ("UPDATE %s SET status = '%s' WHERE reference = '%s';" % (table, status, reference))
         cur.execute(sql)
 
