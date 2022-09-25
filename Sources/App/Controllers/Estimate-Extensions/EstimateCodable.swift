@@ -16,8 +16,6 @@ extension Estimate {
         let totalMaterials: Double
         let totalDivers: Double
         let total: Double
-        let reduction: Double
-        let grandTotal: Double
         let status: EstimateStatus
         let limitValidifyDate: Date?
         let clientID: UUID
@@ -33,8 +31,6 @@ extension Estimate {
         let totalMaterials: Double
         let totalDivers: Double
         let total: Double
-        let reduction: Double
-        let grandTotal: Double
         let status: EstimateStatus
         let limitValidifyDate: Date?
         let creationDate: Date?
@@ -45,7 +41,7 @@ extension Estimate {
         let id: UUID?
         let client: Client.Summary
         let reference: String
-        let grandTotal: Double
+        let total: Double
         let status: EstimateStatus
         let limitValidifyDate: Date
         let isArchive: Bool
@@ -60,8 +56,6 @@ extension Estimate {
         let totalMaterials: Double
         let totalDivers: Double
         let total: Double
-        let reduction: Double
-        let grandTotal: Double
         let status: EstimateStatus
         let limitValidityDate: Date
         let creationDate: Date?

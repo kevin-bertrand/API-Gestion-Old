@@ -18,7 +18,6 @@ extension Invoice {
         let totalMaterials: Double
         let totalDivers: Double
         let total: Double
-        let reduction: Double
         let grandTotal: Double
         let status: InvoiceStatus
         let limitPayementDate: Date?
@@ -36,7 +35,6 @@ extension Invoice {
         let totalMaterials: Double
         let totalDivers: Double
         let total: Double
-        let reduction: Double
         let grandTotal: Double
         let status: InvoiceStatus
         let limitPayementDate: Date?
@@ -64,10 +62,11 @@ extension Invoice {
         let totalMaterials: Double
         let totalDivers: Double
         let total: Double
-        let reduction: Double
         let grandTotal: Double
         let status: InvoiceStatus
         let limitPayementDate: Date
+        let delayDays: Int
+        let totalDelay: Double
         let creationDate: Date?
         let client: Client.Informations
         let products: [Product.Informations]
@@ -87,6 +86,7 @@ extension Invoice {
         let iban: String
         let bic: String
         let total: String
+        let grandTotal: String
         let materialsProducts: [[String]]
         let servicesProducts: [[String]]
         let diversProducts: [[String]]
@@ -94,9 +94,12 @@ extension Invoice {
         let totalMaterials: String
         let totalDivers: String
         let limitDate: String
+        let delayDays: String
+        let totalDelay: String
         let tva: String
         let siret: String
         let hasTva: Bool
         let hasSiret: Bool
+        let hasADelay: Bool
     }
 }

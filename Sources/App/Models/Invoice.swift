@@ -37,10 +37,7 @@ final class Invoice: Model, Content {
     
     @Field(key: "total")
     var total: Double
-    
-    @Field(key: "reduction")
-    var reduction: Double
-    
+        
     @Field(key: "grand_total")
     var grandTotal: Double
     
@@ -55,6 +52,12 @@ final class Invoice: Model, Content {
     
     @Field(key: "limit_payment_date")
     var limitPayementDate: Date
+    
+    @Field(key: "delay_days")
+    var delayDays: Int
+    
+    @Field(key: "total_delay")
+    var totalDelay: Double
     
     @Parent(key: "client_id")
     var client: Client
@@ -79,10 +82,11 @@ final class Invoice: Model, Content {
          totalMaterials: Double,
          totalDivers: Double,
          total: Double,
-         reduction: Double,
          grandTotal: Double,
          status: InvoiceStatus,
          limitPayementDate: Date? = nil,
+         delayDays: Int = 0,
+         totalDelay: Double = 0.0,
          clientID: Client.IDValue,
          paymentID: PayementMethod.IDValue? = nil,
          isArchive: Bool = false) {
@@ -94,10 +98,11 @@ final class Invoice: Model, Content {
         self.totalMaterials = totalMaterials
         self.totalDivers = totalDivers
         self.total = total
-        self.reduction = reduction
         self.grandTotal = grandTotal
         self.status = status
         self.limitPayementDate = limitPayementDate ?? Date().addingTimeInterval(2592000)
+        self.delayDays = delayDays
+        self.totalDelay = totalDelay
         self.$client.id = clientID
         self.$payment.id = paymentID
         self.isArchive = isArchive

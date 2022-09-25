@@ -70,8 +70,6 @@ struct EstimateController: RouteCollection {
                            totalMaterials: newEstimate.totalMaterials,
                            totalDivers: newEstimate.totalDivers,
                            total: newEstimate.total,
-                           reduction: newEstimate.reduction,
-                           grandTotal: newEstimate.grandTotal,
                            status: newEstimate.status,
                            limitValidityDate: newEstimate.limitValidifyDate ?? nil,
                            clientID: newEstimate.clientID)
@@ -106,8 +104,6 @@ struct EstimateController: RouteCollection {
             .set(\.$totalMaterials, to: updateEstimate.totalMaterials)
             .set(\.$totalDivers, to: updateEstimate.totalDivers)
             .set(\.$total, to: updateEstimate.total)
-            .set(\.$reduction, to: updateEstimate.reduction)
-            .set(\.$grandTotal, to: updateEstimate.grandTotal)
             .set(\.$status, to: updateEstimate.status)
             .set(\.$creation, to: updateEstimate.creationDate)
             .set(\.$limitValidityDate, to: updateEstimate.limitValidifyDate ?? Date().addingTimeInterval(2592000))
@@ -129,11 +125,12 @@ struct EstimateController: RouteCollection {
                 if firstMatch != nil {
                     try await ProductEstimate.query(on: req.db)
                         .set(\.$quantity, to: product.quantity)
+                        .set(\.$reduction, to: product.reduction)
                         .filter(\.$product.$id == product.productID)
                         .filter(\.$estimate.$id == updateEstimate.id)
                         .update()
                 } else {
-                    try await ProductEstimate(quantity: product.quantity, productID: product.productID, estimateID: updateEstimate.id).save(on: req.db)
+                    try await ProductEstimate(quantity: product.quantity, reduction: product.reduction, productID: product.productID, estimateID: updateEstimate.id).save(on: req.db)
                 }
             }
         }
@@ -177,6 +174,7 @@ struct EstimateController: RouteCollection {
             guard let product = try await Product.find(productEstimate.$product.id, on: req.db), let productId = product.id else { throw Abort(.notAcceptable) }
             products.append(Product.Informations(id: productId,
                                                  quantity: productEstimate.quantity,
+                                                 reduction: productEstimate.reduction,
                                                  title: product.title,
                                                  unity: product.unity,
                                                  domain: product.domain,
@@ -192,8 +190,6 @@ struct EstimateController: RouteCollection {
                                                          totalMaterials: estimate.totalMaterials,
                                                          totalDivers: estimate.totalDivers,
                                                          total: estimate.total,
-                                                         reduction: estimate.reduction,
-                                                         grandTotal: estimate.grandTotal,
                                                          status: estimate.status,
                                                          limitValidityDate: estimate.limitValidityDate,
                                                          creationDate: estimate.creation,
@@ -241,7 +237,9 @@ struct EstimateController: RouteCollection {
         var newInvoiceProducts: [Product.Create] = []
         
         for product in products {
-            newInvoiceProducts.append(.init(productID: product.$product.id, quantity: product.quantity))
+            newInvoiceProducts.append(.init(productID: product.$product.id,
+                                            quantity: product.quantity,
+                                            reduction: product.reduction))
         }
         
         let newInvoice = Invoice.Create(reference: reference,
@@ -251,8 +249,7 @@ struct EstimateController: RouteCollection {
                                         totalMaterials: estimate.totalMaterials,
                                         totalDivers: estimate.totalDivers,
                                         total: estimate.total,
-                                        reduction: estimate.reduction,
-                                        grandTotal: estimate.grandTotal,
+                                        grandTotal: estimate.total,
                                         status: .inCreation,
                                         limitPayementDate: nil,
                                         clientID: estimate.$client.id,
@@ -291,6 +288,7 @@ struct EstimateController: RouteCollection {
             guard let product = try await Product.find(productEstimate.$product.id, on: req.db), let productId = product.id else { throw Abort(.notAcceptable) }
             products.append(Product.Informations(id: productId,
                                                  quantity: productEstimate.quantity,
+                                                 reduction: productEstimate.reduction,
                                                  title: product.title,
                                                  unity: product.unity,
                                                  domain: product.domain,
@@ -325,7 +323,7 @@ struct EstimateController: RouteCollection {
                                                             clientCity: "\(address.zipCode), \(address.city) - \(address.country)",
                                                             internalReference: estimate.internalReference,
                                                             object: estimate.object,
-                                                            total: estimate.grandTotal.twoDigitPrecision,
+                                                            total: estimate.total.twoDigitPrecision,
                                                             materialsProducts: materialsProducts,
                                                             servicesProducts: servicesProducts,
                                                             diversProducts: diversProducts,
@@ -381,7 +379,7 @@ struct EstimateController: RouteCollection {
                                                                                lastname: client.lastname,
                                                                                company: client.company),
                                                         reference: estimate.reference,
-                                                        grandTotal: estimate.grandTotal,
+                                                        total: estimate.total,
                                                         status: estimate.status,
                                                         limitValidifyDate: estimate.limitValidityDate,
                                                         isArchive: estimate.isArchive))

@@ -22,8 +22,6 @@ struct EstimateMigration: AsyncMigration {
             .field("total_materials", .double, .required)
             .field("total_divers", .double, .required)
             .field("total", .double, .required)
-            .field("reduction", .double, .required)
-            .field("grand_total", .double, .required)
             .field("creation", .datetime)
             .field("update", .datetime)
             .field("status", estimateStatus, .required)

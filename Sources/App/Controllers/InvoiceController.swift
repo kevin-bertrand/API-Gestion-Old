@@ -21,6 +21,7 @@ struct InvoiceController: RouteCollection {
         tokenGroup.post(use: create)
         tokenGroup.patch("paied", ":id", use: isPaied)
         tokenGroup.patch(use: update)
+        tokenGroup.patch("delays", ":id", use: checkDelays)
         tokenGroup.get(use: getList)
         tokenGroup.get("filter", ":filter", use: getList)
         tokenGroup.get(":id", use: getInvoice)
@@ -67,7 +68,6 @@ struct InvoiceController: RouteCollection {
                           totalMaterials: newInvoice.totalMaterials,
                           totalDivers: newInvoice.totalDivers,
                           total: newInvoice.total,
-                          reduction: newInvoice.reduction,
                           grandTotal: newInvoice.grandTotal,
                           status: newInvoice.status,
                           limitPayementDate: newInvoice.limitPayementDate,
@@ -103,7 +103,6 @@ struct InvoiceController: RouteCollection {
             .set(\.$totalMaterials, to: updatedInvoice.totalMaterials)
             .set(\.$totalDivers, to: updatedInvoice.totalDivers)
             .set(\.$total, to: updatedInvoice.total)
-            .set(\.$reduction, to: updatedInvoice.reduction)
             .set(\.$grandTotal, to: updatedInvoice.grandTotal)
             .set(\.$status, to: updatedInvoice.status)
             .set(\.$creation, to: updatedInvoice.creationDate)
@@ -125,11 +124,15 @@ struct InvoiceController: RouteCollection {
                     .first() {
                     try await ProductInvoice.query(on: req.db)
                         .set(\.$quantity, to: product.quantity)
+                        .set(\.$reduction, to: product.reduction)
                         .filter(\.$product.$id == product.productID)
                         .filter(\.$invoice.$id == updatedInvoice.id)
                         .update()
                 } else {
-                    try await ProductInvoice(quantity: product.quantity, productID: product.productID, invoiceID: updatedInvoice.id).save(on: req.db)
+                    try await ProductInvoice(quantity: product.quantity,
+                                             reduction: product.reduction,
+                                             productID: product.productID,
+                                             invoiceID: updatedInvoice.id).save(on: req.db)
                 }
             }
         }
@@ -208,6 +211,7 @@ struct InvoiceController: RouteCollection {
             guard let product = try await Product.find(productInvoice.$product.id, on: req.db), let productId = product.id else { throw Abort(.notAcceptable) }
             products.append(Product.Informations(id: productId,
                                                  quantity: productInvoice.quantity,
+                                                 reduction: productInvoice.reduction,
                                                  title: product.title,
                                                  unity: product.unity,
                                                  domain: product.domain,
@@ -237,10 +241,11 @@ struct InvoiceController: RouteCollection {
                                                        totalMaterials: invoice.totalMaterials,
                                                        totalDivers: invoice.totalDivers,
                                                        total: invoice.total,
-                                                       reduction: invoice.reduction,
                                                        grandTotal: invoice.grandTotal,
                                                        status: invoice.status,
                                                        limitPayementDate: invoice.limitPayementDate,
+                                                       delayDays: invoice.delayDays,
+                                                       totalDelay: invoice.totalDelay,
                                                        creationDate: invoice.creation,
                                                        client: Client.Informations(id: client.id,
                                                                                    firstname: client.firstname,
@@ -278,6 +283,7 @@ struct InvoiceController: RouteCollection {
             guard let product = try await Product.find(productInvoice.$product.id, on: req.db), let productId = product.id else { throw Abort(.notAcceptable) }
             products.append(Product.Informations(id: productId,
                                                  quantity: productInvoice.quantity,
+                                                 reduction: productInvoice.reduction,
                                                  title: product.title,
                                                  unity: product.unity,
                                                  domain: product.domain,
@@ -331,6 +337,7 @@ struct InvoiceController: RouteCollection {
                                                           iban: payment?.iban ?? "",
                                                           bic: payment?.bic ?? "",
                                                           total: invoice.grandTotal.twoDigitPrecision,
+                                                          grandTotal: invoice.grandTotal.twoDigitPrecision,
                                                           materialsProducts: materialsProducts,
                                                           servicesProducts: servicesProducts,
                                                           diversProducts: diversProducts,
@@ -338,10 +345,13 @@ struct InvoiceController: RouteCollection {
                                                           totalMaterials: invoice.totalMaterials.twoDigitPrecision,
                                                           totalDivers: invoice.totalDivers.twoDigitPrecision,
                                                           limitDate: invoice.limitPayementDate.dateOnly,
+                                                          delayDays: "\(invoice.delayDays)",
+                                                          totalDelay: "\(invoice.totalDelay - 40)",
                                                           tva: client.tva ?? "",
                                                           siret: client.siret ?? "",
                                                           hasTva: client.tva != nil,
-                                                          hasSiret: client.siret != nil))
+                                                          hasSiret: client.siret != nil,
+                                                          hasADelay: invoice.totalDelay > 0.0))
         
         let pages = try [page]
             .flatten(on: req.eventLoop)
@@ -355,6 +365,41 @@ struct InvoiceController: RouteCollection {
         let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop, title: invoice.reference)
         
         return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(data: pdf))
+    }
+    
+    /// Check if the invoice is delayed
+    private func checkDelays(_ req: Request) async throws -> Response {
+        let invoiceId = req.parameters.get("id", as: UUID.self)
+        
+        guard let invoiceId = invoiceId,
+              let invoice = try await Invoice.find(invoiceId, on: req.db) else {
+            throw Abort(.notFound)
+            
+        }
+        
+        if invoice.status == .sent {
+            let date = Date()
+            let limitDate = invoice.limitPayementDate
+            
+            if limitDate < date {
+                let calendar = Calendar.current
+                let delay = calendar.numberOfDaysBetween(limitDate, and: date)
+                
+                let interestsRate = 0.0231
+                let total = invoice.totalMaterials + invoice.totalDivers + invoice.totalServices
+                let interests = (total * interestsRate * Double(delay)) + 40.0
+                
+                try await Invoice.query(on: req.db)
+                    .set(\.$totalDelay, to: interests)
+                    .set(\.$delayDays, to: delay)
+                    .set(\.$grandTotal, to: invoice.grandTotal + interests)
+                    .set(\.$status, to: .overdue)
+                    .filter(\.$id == invoiceId)
+                    .update()
+            }
+        }
+        
+        return formatResponse(status: .ok, body: .empty)
     }
     
     // MARK: Utilities functions

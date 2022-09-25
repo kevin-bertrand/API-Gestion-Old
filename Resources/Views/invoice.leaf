@@ -229,6 +229,25 @@
                     <div class="col-5">Total TTC</div>
                     <div class="col-5 rightSection">#(total) €</div>
                 </div>
+                
+                #if(hasDelay):
+                    <div class="row justify-content-between bold margin-vertical">
+                        <div class="col-5">Jours de retard</div>
+                        <div class="col-5 rightSection">#(delayDays)</div>
+                    </div>
+                    <div class="row justify-content-between bold margin-vertical">
+                        <div class="col-5">Intérêts de retard</div>
+                        <div class="col-5 rightSection">#(totalDelay) €</div>
+                    </div>
+                    <div class="row justify-content-between bold margin-vertical">
+                        <div class="col-5">Frais de recouvremnt</div>
+                        <div class="col-5 rightSection">40 €</div>
+                    </div>
+                    <div class="row justify-content-between bold margin-vertical">
+                        <div class="col-5">Grand total</div>
+                        <div class="col-5 rightSection">#(grandTotal) €</div>
+                    </div>
+                #endif
             </div>
         </div>
 

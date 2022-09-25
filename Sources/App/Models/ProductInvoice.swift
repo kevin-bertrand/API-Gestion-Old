@@ -20,6 +20,9 @@ final class ProductInvoice: Model, Content {
     @Field(key: "quantity")
     var quantity: Double
     
+    @Field(key: "reduction")
+    var reduction: Double
+    
     @Parent(key: "product_id")
     var product: Product
     
@@ -29,9 +32,10 @@ final class ProductInvoice: Model, Content {
     // Initialization functions
     init() {}
     
-    init(id: UUID? = nil, quantity: Double, productID: UUID, invoiceID: UUID) throws {
+    init(id: UUID? = nil, quantity: Double, reduction: Double = 0.0, productID: UUID, invoiceID: UUID) throws {
         self.id = id
         self.quantity = quantity
+        self.reduction = reduction
         self.$product.id = productID
         self.$invoice.id = invoiceID
     }

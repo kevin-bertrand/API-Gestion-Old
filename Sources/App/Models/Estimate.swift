@@ -38,12 +38,6 @@ final class Estimate: Model, Content {
     @Field(key: "total")
     var total: Double
     
-    @Field(key: "reduction")
-    var reduction: Double
-    
-    @Field(key: "grand_total")
-    var grandTotal: Double
-    
     @Timestamp(key: "creation", on: .create, format: .default)
     var creation: Date?
     
@@ -76,8 +70,6 @@ final class Estimate: Model, Content {
          totalMaterials: Double,
          totalDivers: Double,
          total: Double,
-         reduction: Double,
-         grandTotal: Double,
          status: EstimateStatus,
          limitValidityDate: Date?,
          clientID: Client.IDValue,
@@ -90,8 +82,6 @@ final class Estimate: Model, Content {
         self.totalMaterials = totalMaterials
         self.totalDivers = totalDivers
         self.total = total
-        self.reduction = reduction
-        self.grandTotal = grandTotal
         self.status = status
         self.limitValidityDate = limitValidityDate ?? Date().addingTimeInterval(2592000)
         self.$client.id = clientID
