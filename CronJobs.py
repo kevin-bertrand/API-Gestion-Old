@@ -35,15 +35,14 @@ def UpdateDocument(table, status, reference, limit):
 
 # Select all invoices
 def SelectInvoices():
-    sql = "SELECT * FROM invoice WHERE status='sent';"
+    sql = "SELECT * FROM invoice WHERE (status='sent' OR status='overdue');"
     cur.execute(sql)
     invoices = cur.fetchall()
 
     for invoice in invoices:
         today = date.today()
-        if today > invoice[13]:
-            response = requests.patch(("http://gestion.desyntic.com/invoice/%s" % (invoice[0])))
-#        UpdateDocument("invoice", "overdue", invoice[1], invoice[13])
+        if today > invoice[12]:
+            response = requests.patch(("http://gestion.desyntic.com:2574/invoice/delays/%s" % (invoice[0])))
 
 # Select all estimates
 def SelectEstimates():
