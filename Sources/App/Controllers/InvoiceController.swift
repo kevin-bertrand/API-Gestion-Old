@@ -15,13 +15,13 @@ struct InvoiceController: RouteCollection {
     // MARK: Route initialisation
     func boot(routes: RoutesBuilder) throws {
         let invoiceGroup = routes.grouped("invoice")
+        invoiceGroup.patch("delays", ":id", use: checkDelays)
         
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
         tokenGroup.post(use: create)
         tokenGroup.patch("paied", ":id", use: isPaied)
         tokenGroup.patch(use: update)
-        tokenGroup.patch("delays", ":id", use: checkDelays)
         tokenGroup.get(use: getList)
         tokenGroup.get("filter", ":filter", use: getList)
         tokenGroup.get(":id", use: getInvoice)
