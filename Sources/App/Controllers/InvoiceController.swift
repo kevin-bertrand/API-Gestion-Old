@@ -378,12 +378,12 @@ struct InvoiceController: RouteCollection {
         }
         
         if invoice.status == .sent || invoice.status == .overdue {
-            let date = Date()
+            let today = Date()
             let limitDate = invoice.limitPayementDate
             
-            if limitDate < date {
+            if limitDate < today {
                 let calendar = Calendar.current
-                let delay = calendar.numberOfDaysBetween(limitDate, and: date)
+                let delay = calendar.numberOfDaysBetween(limitDate, and: today)
                 
                 let interestsRate = 0.0231
                 let total = invoice.totalMaterials + invoice.totalDivers + invoice.totalServices
