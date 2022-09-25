@@ -230,7 +230,7 @@
                     <div class="col-5 rightSection">#(total) €</div>
                 </div>
                 
-                #if(hasDelay):
+                #if(hasADelay):
                     <div class="row justify-content-between bold margin-vertical">
                         <div class="col-5">Jours de retard</div>
                         <div class="col-5 rightSection">#(delayDays)</div>
