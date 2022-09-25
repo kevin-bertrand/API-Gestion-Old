@@ -3,6 +3,7 @@
 ## Librairies import
 ###############################################
 import psycopg2
+import requests
 from decouple import config
 from datetime import date
 
@@ -39,7 +40,8 @@ def SelectInvoices():
     invoices = cur.fetchall()
 
     for invoice in invoices:
-        UpdateDocument("invoice", "overdue", invoice[1], invoice[13])
+        response = requests.patch(("http://gestion.desyntic.com/invoice/%s" % (invoice[0])))
+#        UpdateDocument("invoice", "overdue", invoice[1], invoice[13])
 
 # Select all estimates
 def SelectEstimates():
