@@ -210,6 +210,10 @@
         <div class="section row justify-content-between">
             <div class="col-7">
                 <div>Date d'échéance: <span class="bold">#(limitDate)</span></div>
+                #if(hasADelay):
+                    <div>Nombre de jours de retard: #(delayDays)</div>
+                    <div>Calcul intérêts: #(total) * 0.0231 * #(delayDays) + 40
+                #endif
                 <div>Mode de paiement: <span class="bold">Virement bancaire</span></div>
 
                 <div class="bordered internal-padding">
@@ -231,17 +235,9 @@
                 </div>
                 
                 #if(hasADelay):
-                    <div class="row justify-content-between bold margin-vertical">
-                        <div class="col-5">Jours de retard</div>
-                        <div class="col-5 rightSection">#(delayDays)</div>
-                    </div>
-                    <div class="row justify-content-between bold margin-vertical">
-                        <div class="col-5">Intérêts de retard</div>
+                    <div class="row justify-content-between margin-vertical">
+                        <div class="col-5">Total intérêts</div>
                         <div class="col-5 rightSection">#(totalDelay) €</div>
-                    </div>
-                    <div class="row justify-content-between bold margin-vertical">
-                        <div class="col-5">Frais de recouvremnt</div>
-                        <div class="col-5 rightSection">40 €</div>
                     </div>
                     <div class="row justify-content-between bold margin-vertical">
                         <div class="col-5">Grand total</div>
