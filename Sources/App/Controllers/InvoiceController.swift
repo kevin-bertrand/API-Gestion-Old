@@ -392,7 +392,7 @@ struct InvoiceController: RouteCollection {
                 try await Invoice.query(on: req.db)
                     .set(\.$totalDelay, to: interests)
                     .set(\.$delayDays, to: delay)
-                    .set(\.$grandTotal, to: invoice.grandTotal + interests)
+                    .set(\.$grandTotal, to: invoice.total + interests)
                     .set(\.$status, to: .overdue)
                     .filter(\.$id == invoiceId)
                     .update()
