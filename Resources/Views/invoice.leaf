@@ -225,21 +225,21 @@
             </div>
 
             <div class="col-4 rightSection">
-                <div class="justify-content-between margin-vertical">
+                <div class="row justify-content-between margin-vertical">
                     <div class="col-5">Total HT</div>
                     <div class="col-5 rightSection">#(total) €</div>
                 </div>
-                <div class="justify-content-between bold margin-vertical">
+                <div class="row justify-content-between bold margin-vertical">
                     <div class="col-5">Total TTC</div>
                     <div class="col-5 rightSection">#(total) €</div>
                 </div>
                 
                 #if(hasADelay):
-                    <div class="justify-content-between margin-vertical">
+                    <div class="row justify-content-between margin-vertical">
                         <div class="col-5">Total intérêts</div>
                         <div class="col-5 rightSection">#(totalDelay) €</div>
                     </div>
-                    <div class="justify-content-between bold margin-vertical">
+                    <div class="row justify-content-between bold margin-vertical">
                         <div class="col-5">Grand total</div>
                         <div class="col-5 rightSection">#(grandTotal) €</div>
                     </div>
