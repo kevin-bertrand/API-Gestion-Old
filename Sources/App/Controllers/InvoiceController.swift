@@ -336,7 +336,7 @@ struct InvoiceController: RouteCollection {
                                                           paymentTitle: payment?.title ?? "",
                                                           iban: payment?.iban ?? "",
                                                           bic: payment?.bic ?? "",
-                                                          total: invoice.grandTotal.twoDigitPrecision,
+                                                          total: invoice.total.twoDigitPrecision,
                                                           grandTotal: invoice.grandTotal.twoDigitPrecision,
                                                           materialsProducts: materialsProducts,
                                                           servicesProducts: servicesProducts,
