@@ -377,7 +377,7 @@ struct InvoiceController: RouteCollection {
             
         }
         
-        if invoice.status == .sent {
+        if invoice.status == .sent || invoice.status == .overdue {
             let date = Date()
             let limitDate = invoice.limitPayementDate
             
