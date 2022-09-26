@@ -17,6 +17,7 @@ struct InvoiceController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let invoiceGroup = routes.grouped("invoice")
         invoiceGroup.patch("delays", ":id", use: checkDelays)
+        invoiceGroup.get("pdf", ":reference", use: pdf)
         
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
@@ -26,7 +27,6 @@ struct InvoiceController: RouteCollection {
         tokenGroup.get(use: getList)
         tokenGroup.get("filter", ":filter", use: getList)
         tokenGroup.get(":id", use: getInvoice)
-        tokenGroup.get("pdf", ":id", use: pdf)
     }
     
     // MARK: Routes functions
@@ -269,11 +269,14 @@ struct InvoiceController: RouteCollection {
     private func pdf(req: Request) async throws -> Response {
         let document = Document(margins: 15)
         
-        let id = req.parameters.get("id", as: UUID.self)
+        let reference = req.parameters.get("reference")
         let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
         let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
         
-        guard let id = id, let invoice = try await Invoice.find(id, on: req.db), let client = try await Client.find(invoice.$client.id, on: req.db) else {
+        guard let reference = reference,
+              let invoice = try await Invoice.query(on: req.db).filter(\.$reference == reference).first(),
+              let id = invoice.id,
+              let client = try await Client.find(invoice.$client.id, on: req.db) else {
             throw Abort(.notFound)
         }
         
@@ -384,7 +387,7 @@ struct InvoiceController: RouteCollection {
                 let calendar = Calendar.current
                 let delay = calendar.numberOfDaysBetween(limitDate, and: today)
                 
-                let interestsRate = 3 * 0,0077
+                let interestsRate = 3 * 0.0077
                 let total = invoice.totalMaterials + invoice.totalDivers + invoice.totalServices
                 let interests = (total * interestsRate * Double(delay)) + 40.0
                 
@@ -526,6 +529,8 @@ struct InvoiceController: RouteCollection {
                     (\(invoice.total.twoDigitPrecision) * 3 * 0,0077) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
                     
                     Le montant total à payer à ce jour est de: \(invoice.grandTotal.twoDigitPrecision) €
+                    
+                    Vous pouvez consulter votre facture au lien suivant: http://gestion.desyntic.com:2574/invoice/pdf/\(invoice.reference)
                     
                     Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com
                     -------------------------------------------------------------------------------------------------
