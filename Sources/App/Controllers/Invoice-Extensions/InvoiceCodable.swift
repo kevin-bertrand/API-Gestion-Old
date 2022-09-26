@@ -39,7 +39,7 @@ extension Invoice {
         let status: InvoiceStatus
         let limitPayementDate: Date?
         let creationDate: Date?
-        let paymentID: UUID
+        let paymentID: UUID?
         let products: [Product.Update]
     }
     
