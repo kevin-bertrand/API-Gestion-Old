@@ -2,6 +2,7 @@ import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
 import Leaf
+import Mailgun
 import Vapor
 
 // configures your application
@@ -32,6 +33,10 @@ public func configure(_ app: Application) throws {
     app.http.server.configuration.hostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
     app.http.server.configuration.port = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
     
+    // Configure MailGun
+    app.mailgun.configuration = .environment
+    app.mailgun.defaultDomain = .myApp
+    
     // Migrations
     app.migrations.add(EnumerationsMigration())
     app.migrations.add(PayementMethodMigration())
@@ -51,4 +56,8 @@ public func configure(_ app: Application) throws {
         
     // register routes
     try routes(app)
+}
+
+extension MailgunDomain {
+    static var myApp: MailgunDomain { .init(Environment.get("MAILGUN_DOMAIN") ?? "", .eu)}
 }

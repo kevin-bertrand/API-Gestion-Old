@@ -6,6 +6,7 @@
 //
 
 import Fluent
+import Mailgun
 import Vapor
 
 struct InvoiceController: RouteCollection {
@@ -297,11 +298,11 @@ struct InvoiceController: RouteCollection {
         
         if let paymentID = invoice.$payment.id {
             let paymentResponse = try await req.client.get("http://\(serverIP):\(serverPort)/payment/\(paymentID)", headers: req.headers)
-
+            
             guard var paymentData = paymentResponse.body, let data = paymentData.readData(length: paymentData.readableBytes) else {
                 throw Abort(.internalServerError)
             }
-
+            
             payment = try JSONDecoder().decode(PayementMethod.self, from: data)
         } else {
             payment = nil
@@ -373,7 +374,6 @@ struct InvoiceController: RouteCollection {
         guard let invoiceId = invoiceId,
               let invoice = try await Invoice.find(invoiceId, on: req.db) else {
             throw Abort(.notFound)
-            
         }
         
         if invoice.status == .sent || invoice.status == .overdue {
@@ -395,6 +395,8 @@ struct InvoiceController: RouteCollection {
                     .set(\.$status, to: .overdue)
                     .filter(\.$id == invoiceId)
                     .update()
+                
+                try await sendDelayEmail(for: invoiceId, on: req)
             }
         }
         
@@ -486,6 +488,59 @@ struct InvoiceController: RouteCollection {
                                "\($0.reduction.twoDigitPrecision) % (\(($0.price * $0.quantity * ($0.reduction/100)).twoDigitPrecision) €)",
                                "\(($0.price * $0.quantity * ((100-$0.reduction)/100)).twoDigitPrecision) €"]})
         )
+    }
+    
+    /// Send delay invoice email
+    private func sendDelayEmail(for invoiceId: UUID, on req: Request) async throws {
+        guard let invoice = try await Invoice.find(invoiceId, on: req.db),
+              let client = try await Client.find(invoice.$client.id, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        
+        var name = ""
+        
+        if let lastname = client.lastname {
+            name = "\(client.gender == .man ? "M." : client.gender == .woman ? "Mme." : "")\(lastname)"
+        }
+        
+        if let company = client.company {
+            if name.isEmpty {
+                name = company
+            } else {
+                name.append(" (\(company))")
+            }
+        }
+        
+        if name.isEmpty {
+            name = "Madame, Monsieur"
+        }
+        
+        let message = """
+                    \(name),
+                    
+                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.
+                    La date d'échéance étant le \(invoice.limitPayementDate.dateOnly), vous êtes dorénavant en retard de payement. De ce fait, vous devez regler, en plus du montant de votre facture, des intérêts qui s'élèvent à ce jour à \(invoice.totalDelay.twoDigitPrecision) €.
+                    
+                    Calcul des intétêts:
+                    Note: (total TTC * 3 * taux légal * nombre de jours de retard) + frais de recouvrement = intérêts
+                    (\(invoice.total.twoDigitPrecision) * 0,0231) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
+                    
+                    Le montant total à payer à ce jour est de: \(invoice.grandTotal.twoDigitPrecision) €
+                    
+                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com
+                    -------------------------------------------------------------------------------------------------
+                    Ceci est un message automatique, merci de ne pas y répondre.
+                    """
+        
+        let mail = MailgunMessage(from:  Environment.get("MAILGUN_FROM_EMAIL") ?? "no-reply",
+                                  to: "contact@desyntic.com",
+                                  cc: "contact@desyntic.com",
+                                  subject: "[Retard] Règlement de votre facture \(invoice.reference)",
+                                  text: message)
+        
+        _ = req.mailgun().send(mail).map({ _ in
+            return true
+        })
     }
 }
 
