@@ -152,8 +152,8 @@
                         <th>Désignation</th>
                         <th>Qté.</th>
                         <th>PU TTC</th>
-                        <th>Month TTC</th>
-                        <th>TVA</th>
+                        <th>Remise</th>
+                        <th>Month TTC (avec remise)</th>
                     </tr>
                 </thead>
                 <tbody>

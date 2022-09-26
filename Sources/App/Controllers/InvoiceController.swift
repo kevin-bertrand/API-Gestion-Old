@@ -1,6 +1,6 @@
 //
 //  InvoiceController.swift
-//  
+//
 //
 //  Created by Kevin Bertrand on 26/08/2022.
 //
@@ -150,7 +150,7 @@ struct InvoiceController: RouteCollection {
             .filter(\.$id == paiedInvoice)
             .update()
         
-        if let invoice = try await Invoice.find(paiedInvoice, on: req.db), invoice.isArchive == true {            
+        if let invoice = try await Invoice.find(paiedInvoice, on: req.db), invoice.isArchive == true {
             let date = Date()
             let yearDateFormatter = DateFormatter()
             let monthDateFormatter = DateFormatter()
@@ -321,10 +321,9 @@ struct InvoiceController: RouteCollection {
             clientName.append(company)
         }
         
-        let materialsProducts = products.filter({$0.productCategory == .material}).map({ return [$0.title, $0.quantity.twoDigitPrecision, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
-        let servicesProducts = products.filter({$0.productCategory == .service}).map({ return [$0.title, $0.quantity.twoDigitPrecision, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
-        let diversProducts = products.filter({$0.productCategory == .divers}).map({ return [$0.title, $0.quantity.twoDigitPrecision, "\($0.price.twoDigitPrecision) \($0.unity ?? "")", "\(($0.quantity * $0.price).twoDigitPrecision) €", "0.00 %"]})
-        
+        let materialsProducts = getPdfProductList(products, for: .material)
+        let servicesProducts = getPdfProductList(products, for: .service)
+        let diversProducts = getPdfProductList(products, for: .divers)
         
         let page = req.view.render("invoice", Invoice.PDF(creationDate: Date().dateOnly,
                                                           reference: invoice.reference,
@@ -474,6 +473,19 @@ struct InvoiceController: RouteCollection {
                                    totalDivers: totalDivers,
                                    grandTotal: grandTotal).save(on: req.db)
         }
+    }
+    
+    /// Getting product list for PDF
+    private func getPdfProductList(_ products: [Product.Informations], for category: ProductCategory) -> [[String]] {
+        return (
+            products
+                .filter({$0.productCategory == category})
+                .map({ return [$0.title,
+                               $0.quantity.twoDigitPrecision,
+                               "\($0.price.twoDigitPrecision) \($0.unity ?? "")",
+                               "\($0.reduction.twoDigitPrecision) % (\(($0.price * $0.quantity * ($0.reduction/100)).twoDigitPrecision) €)",
+                               "\(($0.price * $0.quantity * ((100-$0.reduction)/100)).twoDigitPrecision) €"]})
+        )
     }
 }
 
