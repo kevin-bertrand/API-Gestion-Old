@@ -99,6 +99,7 @@ struct InvoiceController: RouteCollection {
         }
         
         try await Invoice.query(on: req.db)
+            .set(\.$internalReference, to: updatedInvoice.internalReference)
             .set(\.$object, to: updatedInvoice.object)
             .set(\.$totalServices, to: updatedInvoice.totalServices)
             .set(\.$totalMaterials, to: updatedInvoice.totalMaterials)
