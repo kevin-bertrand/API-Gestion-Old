@@ -162,9 +162,8 @@
                         #endfor
                         <tr class="end-table-section">
                             <td class="end-table-section-title">Total prestations</td>
-                            <td colspan="2" class="empty-cell"></td>
+                            <td colspan="3" class="empty-cell"></td>
                             <td>#(totalServices) €</td>
-                            <td class="empty-cell"></td>
                         </tr>
                     #endif
                     #if(count(materialsProducts) > 0):
@@ -180,9 +179,8 @@
                         #endfor
                         <tr class="end-table-section">
                             <td class="end-table-section-title">Total prestations</td>
-                            <td colspan="2" class="empty-cell"></td>
+                            <td colspan="3" class="empty-cell"></td>
                             <td>#(totalMaterials) €</td>
-                            <td class="empty-cell"></td>
                         </tr>
                     #endif
                     #if(count(diversProducts) > 0):
