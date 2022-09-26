@@ -384,7 +384,7 @@ struct InvoiceController: RouteCollection {
                 let calendar = Calendar.current
                 let delay = calendar.numberOfDaysBetween(limitDate, and: today)
                 
-                let interestsRate = 0.0231
+                let interestsRate = 3 * 0,0077
                 let total = invoice.totalMaterials + invoice.totalDivers + invoice.totalServices
                 let interests = (total * interestsRate * Double(delay)) + 40.0
                 
@@ -523,7 +523,7 @@ struct InvoiceController: RouteCollection {
                     
                     Calcul des intétêts:
                     Note: (total TTC * 3 * taux légal * nombre de jours de retard) + frais de recouvrement = intérêts
-                    (\(invoice.total.twoDigitPrecision) * 0,0231) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
+                    (\(invoice.total.twoDigitPrecision) * 3 * 0,0077) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
                     
                     Le montant total à payer à ce jour est de: \(invoice.grandTotal.twoDigitPrecision) €
                     
@@ -533,7 +533,7 @@ struct InvoiceController: RouteCollection {
                     """
         
         let mail = MailgunMessage(from:  Environment.get("MAILGUN_FROM_EMAIL") ?? "no-reply",
-                                  to: "contact@desyntic.com",
+                                  to: client.email,
                                   cc: "contact@desyntic.com",
                                   subject: "[Retard] Règlement de votre facture \(invoice.reference)",
                                   text: message)
