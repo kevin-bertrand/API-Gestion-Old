@@ -17,8 +17,7 @@ struct InvoiceController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let invoiceGroup = routes.grouped("invoice")
         invoiceGroup.patch("delays", ":id", use: checkDelays)
-        invoiceGroup.get("pdf", ":reference", use: pdf)
-        
+
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
         tokenGroup.post(use: create)
@@ -27,6 +26,7 @@ struct InvoiceController: RouteCollection {
         tokenGroup.get(use: getList)
         tokenGroup.get("filter", ":filter", use: getList)
         tokenGroup.get(":id", use: getInvoice)
+        tokenGroup.get("pdf", ":reference", use: pdf)
     }
     
     // MARK: Routes functions
@@ -530,8 +530,6 @@ struct InvoiceController: RouteCollection {
                     (\(invoice.total.twoDigitPrecision) * 3 * 0,0077) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
                     
                     Le montant total à payer à ce jour est de: \(invoice.grandTotal.twoDigitPrecision) €
-                    
-                    Vous pouvez consulter votre facture au lien suivant: http://gestion.desyntic.com:2574/invoice/pdf/\(invoice.reference)
                     
                     Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com
                     -------------------------------------------------------------------------------------------------
