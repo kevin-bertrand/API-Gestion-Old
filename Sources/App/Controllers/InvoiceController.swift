@@ -72,7 +72,8 @@ struct InvoiceController: RouteCollection {
                           grandTotal: newInvoice.grandTotal,
                           status: newInvoice.status,
                           limitPayementDate: newInvoice.limitPayementDate,
-                          clientID: newInvoice.clientID)
+                          clientID: newInvoice.clientID,
+                          facturationDate: Date())
         .save(on: req.db)
         
         let invoice = try await Invoice.query(on: req.db)
@@ -110,6 +111,7 @@ struct InvoiceController: RouteCollection {
             .set(\.$creation, to: updatedInvoice.creationDate)
             .set(\.$payment.$id, to: updatedInvoice.paymentID)
             .set(\.$limitPayementDate, to: updatedInvoice.limitPayementDate ?? Date().addingTimeInterval(2592000))
+            .set(\.$facturationDate, to: updatedInvoice.facturationDate)
             .filter(\.$reference == updatedInvoice.reference)
             .update()
         
@@ -246,6 +248,7 @@ struct InvoiceController: RouteCollection {
                                                        grandTotal: invoice.grandTotal,
                                                        status: invoice.status,
                                                        limitPayementDate: invoice.limitPayementDate,
+                                                       facturationDate: invoice.facturationDate,
                                                        delayDays: invoice.delayDays,
                                                        totalDelay: invoice.totalDelay,
                                                        creationDate: invoice.creation,
@@ -349,6 +352,7 @@ struct InvoiceController: RouteCollection {
                                                           totalMaterials: invoice.totalMaterials.twoDigitPrecision,
                                                           totalDivers: invoice.totalDivers.twoDigitPrecision,
                                                           limitDate: invoice.limitPayementDate.dateOnly,
+                                                          facturationDate: invoice.facturationDate.dateOnly,
                                                           delayDays: "\(invoice.delayDays)",
                                                           totalDelay: "\(invoice.totalDelay.twoDigitPrecision)",
                                                           tva: client.tva ?? "",

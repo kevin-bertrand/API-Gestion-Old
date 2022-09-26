@@ -27,6 +27,7 @@ struct InvoiceMigration: AsyncMigration {
             .field("update", .datetime)
             .field("status", invoiceStatus, .required)
             .field("limit_payment_date", .date, .required)
+            .field("facturation_date", .date, .required)
             .field("delay_days", .int32, .required)
             .field("total_delay", .double, .required)
             .field("client_id", .uuid, .required, .references(Client.schema, "id"))

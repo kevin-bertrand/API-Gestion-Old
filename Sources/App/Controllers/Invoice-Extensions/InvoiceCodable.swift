@@ -38,6 +38,7 @@ extension Invoice {
         let grandTotal: Double
         let status: InvoiceStatus
         let limitPayementDate: Date?
+        let facturationDate: Date
         let creationDate: Date?
         let paymentID: UUID?
         let products: [Product.Update]
@@ -65,6 +66,7 @@ extension Invoice {
         let grandTotal: Double
         let status: InvoiceStatus
         let limitPayementDate: Date
+        let facturationDate: Date
         let delayDays: Int
         let totalDelay: Double
         let creationDate: Date?
@@ -94,6 +96,7 @@ extension Invoice {
         let totalMaterials: String
         let totalDivers: String
         let limitDate: String
+        let facturationDate: String
         let delayDays: String
         let totalDelay: String
         let tva: String

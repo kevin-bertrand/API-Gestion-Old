@@ -53,6 +53,9 @@ final class Invoice: Model, Content {
     @Field(key: "limit_payment_date")
     var limitPayementDate: Date
     
+    @Field(key: "facturation_date")
+    var facturationDate: Date
+    
     @Field(key: "delay_days")
     var delayDays: Int
     
@@ -89,6 +92,7 @@ final class Invoice: Model, Content {
          totalDelay: Double = 0.0,
          clientID: Client.IDValue,
          paymentID: PayementMethod.IDValue? = nil,
+         facturationDate: Date,
          isArchive: Bool = false) {
         self.id = id
         self.internalReference = internalReference
@@ -101,6 +105,7 @@ final class Invoice: Model, Content {
         self.grandTotal = grandTotal
         self.status = status
         self.limitPayementDate = limitPayementDate ?? Date().addingTimeInterval(2592000)
+        self.facturationDate = facturationDate
         self.delayDays = delayDays
         self.totalDelay = totalDelay
         self.$client.id = clientID
