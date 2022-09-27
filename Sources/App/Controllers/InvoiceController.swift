@@ -436,7 +436,7 @@ struct InvoiceController: RouteCollection {
                                                                              lastname: client.lastname,
                                                                              company: client.company),
                                                       reference: invoice.reference,
-                                                      grandTotal: invoice.grandTotal,
+                                                      grandTotal: invoice.total,
                                                       status: invoice.status,
                                                       limitPayementDate: invoice.limitPayementDate,
                                                       isArchive: invoice.isArchive))
