@@ -31,6 +31,7 @@ struct EstimateController: RouteCollection {
     /// Getting new estimate reference
     private func getEstimateReference(req: Request) async throws -> Response {
         let estimates = try await Estimate.query(on: req.db)
+            .sort(\.$reference)
             .all()
         
         let dateFormatter = DateFormatter()
