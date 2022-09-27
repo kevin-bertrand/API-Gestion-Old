@@ -33,6 +33,7 @@ extension Estimate {
         let total: Double
         let status: EstimateStatus
         let limitValidifyDate: Date?
+        let sendingDate: Date
         let creationDate: Date?
         let products: [Product.Update]
     }
@@ -59,6 +60,7 @@ extension Estimate {
         let status: EstimateStatus
         let limitValidityDate: Date
         let creationDate: Date?
+        let sendingDate: Date
         let isArchive: Bool
         let client: Client.Informations
         let products: [Product.Informations]
@@ -81,6 +83,7 @@ extension Estimate {
         let totalMaterials: String
         let totalDivers: String
         let limitDate: String
+        let sendingDate: String
         let tva: String
         let siret: String
         let hasTva: Bool

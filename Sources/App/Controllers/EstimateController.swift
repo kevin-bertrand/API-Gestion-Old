@@ -72,6 +72,7 @@ struct EstimateController: RouteCollection {
                            total: newEstimate.total,
                            status: newEstimate.status,
                            limitValidityDate: newEstimate.limitValidifyDate ?? nil,
+                           sendingDate: Date(),
                            clientID: newEstimate.clientID)
         .save(on: req.db)
         
@@ -107,6 +108,7 @@ struct EstimateController: RouteCollection {
             .set(\.$status, to: updateEstimate.status)
             .set(\.$creation, to: updateEstimate.creationDate)
             .set(\.$limitValidityDate, to: updateEstimate.limitValidifyDate ?? Date().addingTimeInterval(2592000))
+            .set(\.$sendingDate, to: updateEstimate.sendingDate)
             .filter(\.$reference == updateEstimate.reference)
             .update()
         
@@ -193,6 +195,7 @@ struct EstimateController: RouteCollection {
                                                          status: estimate.status,
                                                          limitValidityDate: estimate.limitValidityDate,
                                                          creationDate: estimate.creation,
+                                                         sendingDate: estimate.sendingDate,
                                                          isArchive: estimate.isArchive,
                                                          client: Client.Informations(id: client.id,
                                                                                      firstname: client.firstname,
@@ -332,6 +335,7 @@ struct EstimateController: RouteCollection {
                                                             totalMaterials: estimate.totalMaterials.twoDigitPrecision,
                                                             totalDivers: estimate.totalDivers.twoDigitPrecision,
                                                             limitDate: estimate.limitValidityDate.dateOnly,
+                                                            sendingDate: estimate.sendingDate.dateOnly,
                                                             tva: client.tva ?? "",
                                                             siret: client.siret ?? "",
                                                             hasTva: client.tva != nil,

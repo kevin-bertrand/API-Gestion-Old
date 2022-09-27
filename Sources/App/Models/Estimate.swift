@@ -50,6 +50,9 @@ final class Estimate: Model, Content {
     @Field(key: "limit_validity_date")
     var limitValidityDate: Date
     
+    @Field(key: "sending_date")
+    var sendingDate: Date
+    
     @Parent(key: "client_id")
     var client: Client
     
@@ -72,6 +75,7 @@ final class Estimate: Model, Content {
          total: Double,
          status: EstimateStatus,
          limitValidityDate: Date?,
+         sendingDate: Date,
          clientID: Client.IDValue,
          isArchive: Bool = false) {
         self.id = id
@@ -84,6 +88,7 @@ final class Estimate: Model, Content {
         self.total = total
         self.status = status
         self.limitValidityDate = limitValidityDate ?? Date().addingTimeInterval(2592000)
+        self.sendingDate = sendingDate
         self.$client.id = clientID
         self.isArchive = isArchive
     }
