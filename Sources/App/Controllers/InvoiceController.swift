@@ -170,14 +170,14 @@ struct InvoiceController: RouteCollection {
                                        totalServices: invoice.totalServices,
                                        totalMaterial: invoice.totalMaterials,
                                        totalDivers: invoice.totalDivers,
-                                       grandTotal: invoice.grandTotal,
+                                       grandTotal: invoice.total,
                                        in: req)
             try await addToMonthRevenue(month: month,
                                         year: year,
                                         totalServices: invoice.totalServices,
                                         totalMaterial: invoice.totalMaterials,
                                         totalDivers: invoice.totalDivers,
-                                        grandTotal: invoice.grandTotal,
+                                        grandTotal: invoice.total,
                                         in: req)
         }
         
