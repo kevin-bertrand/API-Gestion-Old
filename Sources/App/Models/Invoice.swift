@@ -77,6 +77,12 @@ final class Invoice: Model, Content {
     @OptionalField(key: "comment")
     var comment: String?
     
+    @OptionalField(key: "maximum_interests")
+    var maxInterests: Double?
+    
+    @OptionalField(key: "limit_max_interests")
+    var limitMaxInterests: Date?
+    
     // Initialization functions
     init() {}
     
@@ -97,6 +103,8 @@ final class Invoice: Model, Content {
          paymentID: PayementMethod.IDValue? = nil,
          facturationDate: Date,
          comment: String?,
+         maxInterests: Double?,
+         limitMaxInterests: Date?,
          isArchive: Bool = false) {
         self.id = id
         self.internalReference = internalReference
@@ -116,5 +124,7 @@ final class Invoice: Model, Content {
         self.$payment.id = paymentID
         self.isArchive = isArchive
         self.comment = comment
+        self.maxInterests = maxInterests
+        self.limitMaxInterests = limitMaxInterests
     }
 }

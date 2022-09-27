@@ -33,6 +33,8 @@ struct InvoiceMigration: AsyncMigration {
             .field("client_id", .uuid, .required, .references(Client.schema, "id"))
             .field("payment_id", .uuid, .references(PayementMethod.schema, "id"))
             .field("is_archive", .bool, .required)
+            .field("maximum_interests", .double)
+            .field("limit_max_interests", .date)
             .field("comment", .string)
             .unique(on: "reference")
             .create()

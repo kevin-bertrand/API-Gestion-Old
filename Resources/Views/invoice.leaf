@@ -210,7 +210,7 @@
                 <div>Date d'échéance: <span class="bold">#(limitDate)</span></div>
                 #if(hasADelay):
                     <div>Nombre de jours de retard: #(delayDays)</div>
-                    <div>Calcul intérêts: #(total) * 0.0231 * #(delayDays) + 40
+                    <div>Intérêts: #(interestMessage)
                 #endif
                 <div>Mode de paiement: <span class="bold">Virement bancaire</span></div>
 

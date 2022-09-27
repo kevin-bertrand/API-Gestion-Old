@@ -17,7 +17,7 @@ struct InvoiceController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let invoiceGroup = routes.grouped("invoice")
         invoiceGroup.patch("delays", ":id", use: checkDelays)
-
+        
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
         tokenGroup.post(use: create)
@@ -74,7 +74,9 @@ struct InvoiceController: RouteCollection {
                           limitPayementDate: newInvoice.limitPayementDate,
                           clientID: newInvoice.clientID,
                           facturationDate: Date(),
-                          comment: newInvoice.comment)
+                          comment: newInvoice.comment,
+                          maxInterests: newInvoice.maxInterests,
+                          limitMaxInterests: newInvoice.limitMaximumInterests)
         .save(on: req.db)
         
         let invoice = try await Invoice.query(on: req.db)
@@ -114,6 +116,8 @@ struct InvoiceController: RouteCollection {
             .set(\.$limitPayementDate, to: updatedInvoice.limitPayementDate ?? Date().addingTimeInterval(2592000))
             .set(\.$facturationDate, to: updatedInvoice.facturationDate)
             .set(\.$comment, to: updatedInvoice.comment)
+            .set(\.$maxInterests, to: updatedInvoice.maxInterests)
+            .set(\.$limitMaxInterests, to: updatedInvoice.limitMaximumInterests)
             .filter(\.$reference == updatedInvoice.reference)
             .update()
         
@@ -268,7 +272,9 @@ struct InvoiceController: RouteCollection {
                                                        products: products,
                                                        payment: payment,
                                                        isArchive: invoice.isArchive,
-                                                       comment: invoice.comment)
+                                                       comment: invoice.comment,
+                                                       limitMaximumInterests: invoice.limitMaxInterests,
+                                                       maxInterests: invoice.maxInterests)
         
         return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(invoiceInformations)))
     }
@@ -337,6 +343,21 @@ struct InvoiceController: RouteCollection {
             hasComment = !comment.isEmpty
         }
         
+        var interestMessage = ""
+        
+        if let maxInterests = invoice.maxInterests,
+           let maxLimitInterests = invoice.limitMaxInterests,
+           maxInterests > 0,
+           maxLimitInterests > Date() {
+            if invoice.totalDelay < maxInterests {
+                interestMessage = "De comme un accord, les intérêts sont plafonnés à \(maxInterests.twoDigitPrecision) € pour un payement avant le \(maxLimitInterests.dateOnly)"
+            } else {
+                interestMessage = "\(invoice.totalDelay.twoDigitPrecision) € (Plafonné à \(maxInterests.twoDigitPrecision) € pour un payement avant le \(maxLimitInterests.dateOnly))"
+            }
+        } else {
+            interestMessage = "\(invoice.total.twoDigitPrecision) * 3 * 0,0077 * \(invoice.delayDays) + 40"
+        }
+        
         let materialsProducts = getPdfProductList(products, for: .material)
         let servicesProducts = getPdfProductList(products, for: .service)
         let diversProducts = getPdfProductList(products, for: .divers)
@@ -363,14 +384,14 @@ struct InvoiceController: RouteCollection {
                                                           limitDate: invoice.limitPayementDate.dateOnly,
                                                           facturationDate: invoice.facturationDate.dateOnly,
                                                           delayDays: "\(invoice.delayDays)",
-                                                          totalDelay: "\(invoice.totalDelay.twoDigitPrecision)",
                                                           tva: client.tva ?? "",
                                                           siret: client.siret ?? "",
                                                           hasTva: client.tva != nil,
                                                           hasSiret: client.siret != nil,
                                                           hasADelay: invoice.totalDelay > 0.0,
                                                           hasComment: hasComment,
-                                                          comment: invoice.comment ?? ""))
+                                                          comment: invoice.comment ?? "",
+                                                          interestMessage: interestMessage))
         
         let pages = try [page]
             .flatten(on: req.eventLoop)
@@ -405,7 +426,14 @@ struct InvoiceController: RouteCollection {
                 
                 let interestsRate = 3 * 0.0077
                 let total = invoice.totalMaterials + invoice.totalDivers + invoice.totalServices
-                let interests = (total * interestsRate * Double(delay)) + 40.0
+                var interests = (total * interestsRate * Double(delay)) + 40.0
+                
+                if let maxInterest = invoice.maxInterests,
+                   let maxLimitInterests = invoice.limitMaxInterests,
+                   maxInterest < interests,
+                   maxLimitInterests > today {
+                    interests = maxInterest
+                }
                 
                 try await Invoice.query(on: req.db)
                     .set(\.$totalDelay, to: interests)
@@ -534,15 +562,28 @@ struct InvoiceController: RouteCollection {
             name = "Madame, Monsieur"
         }
         
+        var interestMessage = ""
+        
+        if let maxInterests = invoice.maxInterests,
+           let maxLimitInterests = invoice.limitMaxInterests,
+           maxInterests > 0,
+           maxLimitInterests > Date() {
+            interestMessage = "Nous vous rappelons qu'un accord vous octroyant un plafond de \(maxInterests.twoDigitPrecision) € d'intérêt est toujours valable. Celui-ci le restera jusqu'au \(maxLimitInterests.dateOnly). Dès le lendemain de cette date, les intérêts seront recalculés en fonction des conditions générales en prenant comme nombre de jours de retard, la date limite de payement inscrite sur la facture."
+        } else {
+            interestMessage = """
+                            Calcul des intétêts:
+                            Note: (total TTC * 3 * taux légal * nombre de jours de retard) + frais de recouvrement = intérêts
+                            (\(invoice.total.twoDigitPrecision) * 3 * 0,0077 * \(invoice.delayDays) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
+                            """
+        }
+        
         let message = """
                     \(name),
                     
                     Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.
                     La date d'échéance étant le \(invoice.limitPayementDate.dateOnly), vous êtes dorénavant en retard de payement. De ce fait, vous devez regler, en plus du montant de votre facture, des intérêts qui s'élèvent à ce jour à \(invoice.totalDelay.twoDigitPrecision) €.
                     
-                    Calcul des intétêts:
-                    Note: (total TTC * 3 * taux légal * nombre de jours de retard) + frais de recouvrement = intérêts
-                    (\(invoice.total.twoDigitPrecision) * 3 * 0,007 * \(invoice.delayDays) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
+                    \(interestMessage)
                     
                     Le montant total à payer à ce jour est de: \(invoice.grandTotal.twoDigitPrecision) €
                     
