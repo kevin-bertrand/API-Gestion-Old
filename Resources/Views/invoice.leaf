@@ -117,12 +117,13 @@
                 <div><p>contact@desyntic.com</p></div>
             </div>
 
-            <div class="col-5 bordered text-start rightSection internal-padding">
+            <div class="col-6 bordered text-start rightSection internal-padding">
                 <div class="bold">
                     <p>#(clientName)</p>
                 </div>
                 <div><p>#(clientAddress)</p></div>
                 <div><p>#(clientCity)</p></div>
+                <div><p>#(clientCountry)</p></div>
                 #if(hasTva):
                     <div><p>TVA: #(tva)</p></div>
                 #endif

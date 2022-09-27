@@ -82,6 +82,7 @@ extension Invoice {
         let clientName: String
         let clientAddress: String
         let clientCity: String
+        let clientCountry: String
         let internalReference: String
         let object: String
         let paymentTitle: String
