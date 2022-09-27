@@ -32,7 +32,7 @@ struct InvoiceController: RouteCollection {
     // MARK: Routes functions
     /// Getting new invoice reference
     private func getInvoiceReference(req: Request) async throws -> Response {
-        let invoices = try await Invoice.query(on: req.db).all()
+        let invoices = try await Invoice.query(on: req.db).sort(\.$reference).all()
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMM"
