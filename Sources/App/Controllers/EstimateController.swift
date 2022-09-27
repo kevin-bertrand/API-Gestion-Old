@@ -152,7 +152,7 @@ struct EstimateController: RouteCollection {
             let min = (estimatesCount - filters) < 0 ? 0 : (estimatesCount - filters)
             
             estimates = formatEstimatesSummary(req: req,
-                                               estimates: try await Estimate.query(on: req.db).with(\.$client).range(min..<estimatesCount).all())
+                                               estimates: try await Estimate.query(on: req.db).with(\.$client).sort(\.$sendingDate).range(min..<estimatesCount).all())
         } else {
             estimates = try await getAllEstimates(req: req)
         }
@@ -371,7 +371,7 @@ struct EstimateController: RouteCollection {
     
     /// Getting all estimates
     private func getAllEstimates(req: Request) async throws -> [Estimate.Summary] {
-        return formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db).with(\.$client).all())
+        return formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db).with(\.$client).sort(\.$reference).all())
     }
     
     /// Format estimate summary

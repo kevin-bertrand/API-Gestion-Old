@@ -190,9 +190,9 @@ struct InvoiceController: RouteCollection {
         let invoices: [Invoice.Summary]
         
         if let filter = filter {
-            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db).with(\.$client).range(..<filter).all())
+            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db).with(\.$client).sort(\.$facturationDate).range(..<filter).all())
         } else {
-            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db).with(\.$client).all())
+            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db).with(\.$client).sort(\.$reference).all())
         }
         
         return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(invoices)))
