@@ -73,7 +73,8 @@ struct InvoiceController: RouteCollection {
                           status: newInvoice.status,
                           limitPayementDate: newInvoice.limitPayementDate,
                           clientID: newInvoice.clientID,
-                          facturationDate: Date())
+                          facturationDate: Date(),
+                          comment: newInvoice.comment)
         .save(on: req.db)
         
         let invoice = try await Invoice.query(on: req.db)
@@ -112,6 +113,7 @@ struct InvoiceController: RouteCollection {
             .set(\.$payment.$id, to: updatedInvoice.paymentID)
             .set(\.$limitPayementDate, to: updatedInvoice.limitPayementDate ?? Date().addingTimeInterval(2592000))
             .set(\.$facturationDate, to: updatedInvoice.facturationDate)
+            .set(\.$comment, to: updatedInvoice.comment)
             .filter(\.$reference == updatedInvoice.reference)
             .update()
         
@@ -265,7 +267,8 @@ struct InvoiceController: RouteCollection {
                                                                                    address: try await addressController.getAddressFromId(client.$address.id, for: req)),
                                                        products: products,
                                                        payment: payment,
-                                                       isArchive: invoice.isArchive)
+                                                       isArchive: invoice.isArchive,
+                                                       comment: invoice.comment)
         
         return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(invoiceInformations)))
     }
@@ -329,6 +332,11 @@ struct InvoiceController: RouteCollection {
             clientName.append(company)
         }
         
+        var hasComment = false
+        if let comment = invoice.comment {
+            hasComment = !comment.isEmpty
+        }
+        
         let materialsProducts = getPdfProductList(products, for: .material)
         let servicesProducts = getPdfProductList(products, for: .service)
         let diversProducts = getPdfProductList(products, for: .divers)
@@ -360,7 +368,9 @@ struct InvoiceController: RouteCollection {
                                                           siret: client.siret ?? "",
                                                           hasTva: client.tva != nil,
                                                           hasSiret: client.siret != nil,
-                                                          hasADelay: invoice.totalDelay > 0.0))
+                                                          hasADelay: invoice.totalDelay > 0.0,
+                                                          hasComment: hasComment,
+                                                          comment: invoice.comment ?? ""))
         
         let pages = try [page]
             .flatten(on: req.eventLoop)

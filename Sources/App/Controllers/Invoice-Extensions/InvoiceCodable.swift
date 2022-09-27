@@ -23,6 +23,7 @@ extension Invoice {
         let limitPayementDate: Date?
         let clientID: UUID
         let paymentID: UUID?
+        let comment: String?
         let products: [Product.Create]
     }
     
@@ -41,6 +42,7 @@ extension Invoice {
         let facturationDate: Date
         let creationDate: Date?
         let paymentID: UUID?
+        let comment: String?
         let products: [Product.Update]
     }
     
@@ -74,6 +76,7 @@ extension Invoice {
         let products: [Product.Informations]
         let payment: PayementMethod?
         let isArchive: Bool
+        let comment: String?
     }
     
     struct PDF: Codable {
@@ -105,5 +108,7 @@ extension Invoice {
         let hasTva: Bool
         let hasSiret: Bool
         let hasADelay: Bool
+        let hasComment: Bool
+        let comment: String
     }
 }

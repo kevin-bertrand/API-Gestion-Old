@@ -37,7 +37,7 @@ final class Invoice: Model, Content {
     
     @Field(key: "total")
     var total: Double
-        
+    
     @Field(key: "grand_total")
     var grandTotal: Double
     
@@ -67,12 +67,15 @@ final class Invoice: Model, Content {
     
     @OptionalParent(key: "payment_id")
     var payment: PayementMethod?
-        
+    
     @Siblings(through: ProductInvoice.self, from: \.$invoice, to: \.$product)
     public var products: [Product]
     
     @Field(key: "is_archive")
     var isArchive: Bool
+    
+    @OptionalField(key: "comment")
+    var comment: String?
     
     // Initialization functions
     init() {}
@@ -93,6 +96,7 @@ final class Invoice: Model, Content {
          clientID: Client.IDValue,
          paymentID: PayementMethod.IDValue? = nil,
          facturationDate: Date,
+         comment: String?,
          isArchive: Bool = false) {
         self.id = id
         self.internalReference = internalReference
@@ -111,5 +115,6 @@ final class Invoice: Model, Content {
         self.$client.id = clientID
         self.$payment.id = paymentID
         self.isArchive = isArchive
+        self.comment = comment
     }
 }

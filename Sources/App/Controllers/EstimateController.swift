@@ -258,6 +258,7 @@ struct EstimateController: RouteCollection {
                                         limitPayementDate: nil,
                                         clientID: estimate.$client.id,
                                         paymentID: nil,
+                                        comment: nil,
                                         products: newInvoiceProducts)
         
         let addInvoiceResponse = try await req.client.post("http://\(serverIP):\(serverPort)/invoice",

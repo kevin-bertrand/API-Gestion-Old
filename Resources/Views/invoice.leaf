@@ -244,6 +244,12 @@
                 #endif
             </div>
         </div>
+        
+        #if(hasComment):
+            <div class="section bordered internal-padding row margin-vertical bold">
+                #(comment)
+            </div>
+        #endif
 
         <div class="section bordered internal-padding row margin-vertical">
             Micro-entreprise - TVA non-applicable, art 293 B du CGI
