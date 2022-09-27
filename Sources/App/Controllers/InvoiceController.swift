@@ -531,7 +531,7 @@ struct InvoiceController: RouteCollection {
                     
                     Calcul des intétêts:
                     Note: (total TTC * 3 * taux légal * nombre de jours de retard) + frais de recouvrement = intérêts
-                    (\(invoice.total.twoDigitPrecision) * 3 * 0,0077) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
+                    (\(invoice.total.twoDigitPrecision) * 3 * 0,007 * \(invoice.delayDays) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
                     
                     Le montant total à payer à ce jour est de: \(invoice.grandTotal.twoDigitPrecision) €
                     
