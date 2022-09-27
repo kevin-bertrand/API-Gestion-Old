@@ -384,6 +384,7 @@ struct InvoiceController: RouteCollection {
                                                           limitDate: invoice.limitPayementDate.dateOnly,
                                                           facturationDate: invoice.facturationDate.dateOnly,
                                                           delayDays: "\(invoice.delayDays)",
+                                                          totalDelay: "\(invoice.totalDelay.twoDigitPrecision)",
                                                           tva: client.tva ?? "",
                                                           siret: client.siret ?? "",
                                                           hasTva: client.tva != nil,

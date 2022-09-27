@@ -108,6 +108,7 @@ extension Invoice {
         let limitDate: String
         let facturationDate: String
         let delayDays: String
+        let totalDelay: String
         let tva: String
         let siret: String
         let hasTva: Bool
