@@ -348,7 +348,7 @@ struct InvoiceController: RouteCollection {
         if let maxInterests = invoice.maxInterests,
            let maxLimitInterests = invoice.limitMaxInterests,
            maxInterests > 0,
-           maxLimitInterests > Date() {
+           maxLimitInterests >= Date() {
             if invoice.totalDelay < maxInterests {
                 interestMessage = "De comme un accord, les intérêts sont plafonnés à \(maxInterests.twoDigitPrecision) € pour un payement avant le \(maxLimitInterests.dateOnly)"
             } else {
@@ -432,7 +432,7 @@ struct InvoiceController: RouteCollection {
                 if let maxInterest = invoice.maxInterests,
                    let maxLimitInterests = invoice.limitMaxInterests,
                    maxInterest < interests,
-                   maxLimitInterests > today {
+                   maxLimitInterests >= today {
                     interests = maxInterest
                 }
                 
@@ -568,7 +568,7 @@ struct InvoiceController: RouteCollection {
         if let maxInterests = invoice.maxInterests,
            let maxLimitInterests = invoice.limitMaxInterests,
            maxInterests > 0,
-           maxLimitInterests > Date() {
+           maxLimitInterests >= Date() {
             interestMessage = "Nous vous rappelons qu'un accord vous octroyant un plafond de \(maxInterests.twoDigitPrecision) € d'intérêt est toujours valable. Celui-ci le restera jusqu'au \(maxLimitInterests.dateOnly). Dès le lendemain de cette date, les intérêts seront recalculés en fonction des conditions générales en prenant comme nombre de jours de retard, la date limite de payement inscrite sur la facture."
         } else {
             interestMessage = """
