@@ -355,7 +355,7 @@ struct InvoiceController: RouteCollection {
                 interestMessage = "\(invoice.totalDelay.twoDigitPrecision) € (Plafonné à \(maxInterests.twoDigitPrecision) € pour un payement avant le \(maxLimitInterests.dateOnly))"
             }
         } else {
-            interestMessage = "((\(invoice.total.twoDigitPrecision) * 3 * 0,0077 * \(invoice.delayDays)) / 36500) + 40"
+            interestMessage = "((\(invoice.total.twoDigitPrecision) * 3 * 0,0077 * \(invoice.delayDays)) / 365) + 40"
         }
         
         let materialsProducts = getPdfProductList(products, for: .material)
@@ -427,7 +427,7 @@ struct InvoiceController: RouteCollection {
                 
                 let interestsRate = 3 * 0.0077
                 let total = invoice.totalMaterials + invoice.totalDivers + invoice.totalServices
-                var interests = ((total * interestsRate * Double(delay))/36500.0) + 40.0
+                var interests = ((total * interestsRate * Double(delay)) / 365.0) + 40.0
                 
                 if let maxInterest = invoice.maxInterests,
                    let maxLimitInterests = invoice.limitMaxInterests,
@@ -574,7 +574,7 @@ struct InvoiceController: RouteCollection {
             interestMessage = """
                             Calcul des intétêts:
                             Note: ((total TTC * 3 * taux légal * nombre de jours de retard)/36500) + frais de recouvrement = intérêts
-                            ((\(invoice.total.twoDigitPrecision) * 3 * 0,0077 * \(invoice.delayDays))/36500) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
+                            ((\(invoice.total.twoDigitPrecision) * 3 * 0,0077 * \(invoice.delayDays)) / 365) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
                             """
         }
         
