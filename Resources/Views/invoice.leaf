@@ -219,6 +219,7 @@
                     <div class="bold">#(paymentTitle)</div>
                     <div>IBAN: <span class="bold">#(iban)</span></div>
                     <div>BIC: <span class="bold">#(bic)</span></div>
+                    <div>Communication: <span class="bold">#(reference)</span></div>
                 </div>
             </div>
 
