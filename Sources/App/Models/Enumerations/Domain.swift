@@ -8,5 +8,5 @@
 import Foundation
 
 enum Domain: String, Codable, CaseIterable {
-    case electricity, automation, development
+    case electricity, automation, development, project, dao
 }

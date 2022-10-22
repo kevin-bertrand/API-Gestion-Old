@@ -20,9 +20,6 @@ final class Estimate: Model, Content {
     @Field(key: "reference")
     var reference: String
     
-    @Field(key: "internal_reference")
-    var internalReference: String
-    
     @Field(key: "object")
     var object: String
     
@@ -67,7 +64,6 @@ final class Estimate: Model, Content {
     
     init(id: UUID? = nil,
          reference: String,
-         internalReference: String,
          object: String,
          totalServices: Double,
          totalMaterials: Double,
@@ -80,7 +76,6 @@ final class Estimate: Model, Content {
          isArchive: Bool = false) {
         self.id = id
         self.reference = reference
-        self.internalReference = internalReference
         self.object = object
         self.totalServices = totalServices
         self.totalMaterials = totalMaterials

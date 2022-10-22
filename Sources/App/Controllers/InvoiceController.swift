@@ -63,7 +63,6 @@ struct InvoiceController: RouteCollection {
         let newInvoice = try req.content.decode(Invoice.Create.self)
         
         try await Invoice(reference: newInvoice.reference,
-                          internalReference: newInvoice.internalReference,
                           object: newInvoice.object,
                           totalServices: newInvoice.totalServices,
                           totalMaterials: newInvoice.totalMaterials,
@@ -82,6 +81,15 @@ struct InvoiceController: RouteCollection {
         let invoice = try await Invoice.query(on: req.db)
             .filter(\.$reference == newInvoice.reference)
             .first()
+        
+        if let _ = try await InternalReference.query(on: req.db).filter(\.$ref == newInvoice.internalReference).first() {
+            try await InternalReference.query(on: req.db)
+                .set(\.$invoice.$id, to: invoice?.requireID())
+                .filter(\.$ref == newInvoice.internalReference)
+                .update()
+        } else {
+            try await InternalReference(ref: newInvoice.internalReference, invoiceID: invoice?.requireID()).save(on: req.db)
+        }
         
         guard let invoice = invoice, let invoiceId = invoice.id else {
             throw Abort(.internalServerError)
@@ -103,7 +111,6 @@ struct InvoiceController: RouteCollection {
         }
         
         try await Invoice.query(on: req.db)
-            .set(\.$internalReference, to: updatedInvoice.internalReference)
             .set(\.$object, to: updatedInvoice.object)
             .set(\.$totalServices, to: updatedInvoice.totalServices)
             .set(\.$totalMaterials, to: updatedInvoice.totalMaterials)
@@ -210,7 +217,10 @@ struct InvoiceController: RouteCollection {
         let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
         let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
         
-        guard let id = id, let invoice = try await Invoice.find(id, on: req.db), let client = try await Client.find(invoice.$client.id, on: req.db) else {
+        guard let id = id,
+              let invoice = try await Invoice.find(id, on: req.db),
+              let client = try await Client.find(invoice.$client.id, on: req.db),
+              let internalRef = try await InternalReference.query(on: req.db).filter(\.$invoice.$id == invoice.requireID()).first()?.ref else {
             throw Abort(.notFound)
         }
         
@@ -245,7 +255,7 @@ struct InvoiceController: RouteCollection {
         
         let invoiceInformations = Invoice.Informations(id: id,
                                                        reference: invoice.reference,
-                                                       internalReference: invoice.internalReference,
+                                                       internalReference: internalRef,
                                                        object: invoice.object,
                                                        totalServices: invoice.totalServices,
                                                        totalMaterials: invoice.totalMaterials,
@@ -289,7 +299,8 @@ struct InvoiceController: RouteCollection {
         guard let reference = reference,
               let invoice = try await Invoice.query(on: req.db).filter(\.$reference == reference).first(),
               let id = invoice.id,
-              let client = try await Client.find(invoice.$client.id, on: req.db) else {
+              let client = try await Client.find(invoice.$client.id, on: req.db),
+              let internalRef = try await InternalReference.query(on: req.db).filter(\.$invoice.$id == id).first()?.ref else {
             throw Abort(.notFound)
         }
         
@@ -368,7 +379,7 @@ struct InvoiceController: RouteCollection {
                                                           clientAddress: "\(address.streetNumber) \(address.roadName)",
                                                           clientCity: "\(address.zipCode), \(address.city)",
                                                           clientCountry: address.country,
-                                                          internalReference: invoice.internalReference,
+                                                          internalReference: internalRef,
                                                           object: invoice.object,
                                                           paymentTitle: payment?.title ?? "",
                                                           iban: payment?.iban ?? "",

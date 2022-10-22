@@ -15,6 +15,8 @@ struct EnumerationsMigration: AsyncMigration {
             .case("electricity")
             .case("automation")
             .case("development")
+            .case("project")
+            .case("dao")
             .create()
         
         _ = try await database.enum("estimate_status")

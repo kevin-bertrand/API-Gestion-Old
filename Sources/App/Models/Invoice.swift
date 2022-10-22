@@ -20,9 +20,6 @@ final class Invoice: Model, Content {
     @Field(key: "reference")
     var reference: String
     
-    @Field(key: "internal_reference")
-    var internalReference: String
-    
     @Field(key: "object")
     var object: String
     
@@ -88,7 +85,6 @@ final class Invoice: Model, Content {
     
     init(id: UUID? = nil,
          reference: String,
-         internalReference: String,
          object: String,
          totalServices: Double,
          totalMaterials: Double,
@@ -107,7 +103,6 @@ final class Invoice: Model, Content {
          limitMaxInterests: Date?,
          isArchive: Bool = false) {
         self.id = id
-        self.internalReference = internalReference
         self.object = object
         self.reference = reference
         self.totalServices = totalServices

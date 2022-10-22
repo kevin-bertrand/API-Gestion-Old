@@ -65,7 +65,6 @@ struct EstimateController: RouteCollection {
         guard newEstimate.reference != "" else { throw Abort(.notAcceptable)}
         
         try await Estimate(reference: newEstimate.reference,
-                           internalReference: newEstimate.internalReference,
                            object: newEstimate.object,
                            totalServices: newEstimate.totalServices,
                            totalMaterials: newEstimate.totalMaterials,
@@ -84,6 +83,8 @@ struct EstimateController: RouteCollection {
         guard let estimate = estimate else {
             throw Abort(.internalServerError)
         }
+        
+        try await InternalReference(ref: newEstimate.internalReference, estimateID: estimate.requireID()).save(on: req.db)
         
         for product in newEstimate.products {
             try await ProductEstimate(quantity: product.quantity, productID: product.productID, estimateID: try estimate.requireID()).save(on: req.db)
@@ -166,7 +167,8 @@ struct EstimateController: RouteCollection {
         
         guard let id = id,
               let estimate = try await Estimate.find(id, on: req.db),
-              let client = try await Client.find(estimate.$client.id, on: req.db) else {
+              let client = try await Client.find(estimate.$client.id, on: req.db),
+              let internalRef = try await InternalReference.query(on: req.db).filter(\.$estimate.$id == estimate.requireID()).first()?.ref else {
             throw Abort(.notFound)
         }
         
@@ -187,7 +189,7 @@ struct EstimateController: RouteCollection {
         
         let estimateInformations = Estimate.Informations(id: id,
                                                          reference: estimate.reference,
-                                                         internalReference: estimate.internalReference,
+                                                         internalReference: internalRef,
                                                          object: estimate.object,
                                                          totalServices: estimate.totalServices,
                                                          totalMaterials: estimate.totalMaterials,
@@ -222,7 +224,8 @@ struct EstimateController: RouteCollection {
         
         guard let estimateRef = estimateRef,
               let estimate = try await Estimate.query(on: req.db).filter(\.$reference == estimateRef).first(),
-              let estimateId = estimate.id else {
+              let estimateId = estimate.id,
+              let internalRef = try await InternalReference.query(on: req.db).filter(\.$estimate.$id == estimateId).first()?.ref else {
             throw Abort(.notFound)
         }
         
@@ -247,7 +250,7 @@ struct EstimateController: RouteCollection {
         }
         
         let newInvoice = Invoice.Create(reference: reference,
-                                        internalReference: estimate.internalReference,
+                                        internalReference: internalRef,
                                         object: estimate.object,
                                         totalServices: estimate.totalServices,
                                         totalMaterials: estimate.totalMaterials,
@@ -284,7 +287,10 @@ struct EstimateController: RouteCollection {
     private func pdf(req: Request) async throws -> Response {
         let document = Document(margins: 15)
         let id = req.parameters.get("id", as: UUID.self)
-        guard let id = id, let estimate = try await Estimate.find(id, on: req.db), let client = try await Client.find(estimate.$client.id, on: req.db) else {
+        guard let id = id,
+              let estimate = try await Estimate.find(id, on: req.db),
+              let client = try await Client.find(estimate.$client.id, on: req.db),
+              let internalRef = try await InternalReference.query(on: req.db).filter(\.$estimate.$id == estimate.requireID()).first()?.ref else {
             throw Abort(.notFound)
         }
         
@@ -329,7 +335,7 @@ struct EstimateController: RouteCollection {
                                                             clientAddress: "\(address.streetNumber) \(address.roadName)",
                                                             clientCity: "\(address.zipCode), \(address.city)",
                                                             clientCountry: address.country,
-                                                            internalReference: estimate.internalReference,
+                                                            internalReference: internalRef,
                                                             object: estimate.object,
                                                             total: estimate.total.twoDigitPrecision,
                                                             materialsProducts: materialsProducts,

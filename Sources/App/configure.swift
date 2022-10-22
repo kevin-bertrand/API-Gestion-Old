@@ -34,8 +34,8 @@ public func configure(_ app: Application) throws {
     app.http.server.configuration.port = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
     
     // Configure MailGun
-    app.mailgun.configuration = .environment
-    app.mailgun.defaultDomain = .myApp
+//    app.mailgun.configuration = .environment
+//    app.mailgun.defaultDomain = .myApp
     
     // Migrations
     app.migrations.add(EnumerationsMigration())
@@ -49,6 +49,7 @@ public func configure(_ app: Application) throws {
     app.migrations.add(StaffMigration())
     app.migrations.add(UserTokenMigration())
     app.migrations.add(YearRevenueMigration())
+    app.migrations.add(InternalReferenceMigration())
     app.migrations.add(SiblingsMigration())
     
     // Add default administrator user
@@ -58,6 +59,6 @@ public func configure(_ app: Application) throws {
     try routes(app)
 }
 
-extension MailgunDomain {
-    static var myApp: MailgunDomain { .init(Environment.get("MAILGUN_DOMAIN") ?? "", .eu)}
-}
+//extension MailgunDomain {
+//    static var myApp: MailgunDomain { .init(Environment.get("MAILGUN_DOMAIN") ?? "", .eu)}
+//}
