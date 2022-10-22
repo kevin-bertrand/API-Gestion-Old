@@ -51,15 +51,22 @@ struct InternalReferenceController: RouteCollection {
             .filter(\.$ref =~ ref)
             .all()
             .map({ reference in
-                guard let refInt = Int(reference.ref.replacingOccurrences(of: ref, with: "")) else {
-                    throw Abort(.internalServerError)
-                }
-                return refInt
+                return reference.ref.replacingOccurrences(of: ref, with: "")
             })
-
+        
+        var referencesInt = [Int]()
+        
+        for reference in references {
+            guard let refInt = Int(reference) else {
+                throw Abort(.internalServerError)
+            }
+            
+            referencesInt.append(refInt)
+        }
+    
         var newReference = ref
         
-        if let maxRef = references.max() {
+        if let maxRef = referencesInt.max() {
             let newNumber = "\(maxRef + 1)"
             
             switch newNumber.count {
