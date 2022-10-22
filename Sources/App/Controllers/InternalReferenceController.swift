@@ -83,7 +83,7 @@ struct InternalReferenceController: RouteCollection {
             newReference.append("001")
         }
         
-        return formatResponse(status: .ok, body: .init(stringLiteral: newReference))
+        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(newReference)))
     }
     
     // MARK: Utilities functions
