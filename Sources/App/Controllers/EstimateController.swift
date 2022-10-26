@@ -139,6 +139,11 @@ struct EstimateController: RouteCollection {
             }
         }
         
+        try await InternalReference.query(on: req.db)
+            .set(\.$ref, to: updateEstimate.internalReference)
+            .filter(\.$estimate.$id == updateEstimate.id)
+            .update()
+        
         return formatResponse(status: .ok, body: .empty)
     }
     

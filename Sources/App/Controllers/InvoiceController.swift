@@ -154,6 +154,11 @@ struct InvoiceController: RouteCollection {
             }
         }
         
+        try await InternalReference.query(on: req.db)
+            .set(\.$ref, to: updatedInvoice.internalReference)
+            .filter(\.$invoice.$id == updatedInvoice.id)
+            .update()
+        
         return formatResponse(status: .ok, body: .empty)
     }
     
