@@ -11,18 +11,18 @@ import Vapor
 struct PayementMethodMigration: AsyncMigration {
     // Create DB
     func prepare(on database: Database) async throws {
-        try await database.schema(PayementMethod.schema)
+        try await database.schema(NameManager.PaymentMethod.schema.rawValue)
             .id()
-            .field("title", .string, .required)
-            .field("iban", .string, .required)
-            .field("bic", .string, .required)
-            .unique(on: "iban")
+            .field(NameManager.PaymentMethod.title.rawValue.fieldKey, .string, .required)
+            .field(NameManager.PaymentMethod.iban.rawValue.fieldKey, .string, .required)
+            .field(NameManager.PaymentMethod.bic.rawValue.fieldKey, .string, .required)
+            .unique(on: NameManager.PaymentMethod.iban.rawValue.fieldKey)
             .create()
     }
     
     // Deleted DB
     func revert(on database: Database) async throws {
-        try await database.schema(PayementMethod.schema).delete()
+        try await database.schema(NameManager.PaymentMethod.schema.rawValue).delete()
     }
 }
 

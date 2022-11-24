@@ -33,7 +33,7 @@ struct StaffController: RouteCollection {
     // MARK: Routes functions
     /// Login function
     private func login(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         
         let token = try await generateToken(for: userAuth, in: req)
         
@@ -50,12 +50,12 @@ struct StaffController: RouteCollection {
                                                 permissions: userAuth.permissions,
                                                 address: try await addressController.getAddressFromId(userAuth.$address.id, for: req))
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staffInformations)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staffInformations)))
     }
     
     /// Create user
     private func create(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         let receivedData = try req.content.decode(Staff.Create.self)
         
         guard userAuth.permissions == .admin else {
@@ -76,12 +76,12 @@ struct StaffController: RouteCollection {
                         addressID: try addressID.requireID())
         .save(on: req.db)
         
-        return formatResponse(status: .created, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .created, body: .empty)
     }
     
     /// Delete user
     private func delete(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         let idToDelete = req.parameters.get("id")
         
         guard userAuth.permissions == .admin else {
@@ -97,17 +97,15 @@ struct StaffController: RouteCollection {
         
         try await staffToDelete.delete(on: req.db)
         
-        return formatResponse(status: .ok, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
     
     /// Get staff list
     private func getList(req: Request) async throws -> Response {
-        _ = try getUserAuthFor(req)
-        
         let staff = try await Staff.query(on: req.db)
             .all()
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staff)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staff)))
     }
     
     /// Get one staff info
@@ -122,12 +120,12 @@ struct StaffController: RouteCollection {
         
         let staffInformations = Staff.Information(firstname: staff.firstname, lastname: staff.lastname, phone: staff.phone, email: staff.email, gender: staff.gender, position: staff.position, role: staff.role, permissions: staff.permissions, address: try await addressController.getAddressFromId(staff.$address.id, for: req))
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staffInformations)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staffInformations)))
     }
     
     /// Update staff information
     private func update(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         let user = try req.content.decode(Staff.Update.self)
         
         let updatedAddress = try await addressController.create(user.address, for: req)
@@ -159,12 +157,12 @@ struct StaffController: RouteCollection {
                                                 permissions: userAuth.permissions,
                                                 address: updatedAddress)
                 
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staffInformations)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staffInformations)))
     }
     
     /// Update staff password
     private func updatePassword(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         let updatePassword = try req.content.decode(Staff.UpdatePassword.self)
         
         guard let userId = userAuth.id, userId == updatePassword.id else {
@@ -180,14 +178,14 @@ struct StaffController: RouteCollection {
             .filter(\.$id == userId)
             .update()
         
-        return formatResponse(status: .ok, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
     
     /// Update profile picture
     private func updateProfilePicture(req: Request) async throws -> Response {
         let file = try req.content.decode(File.self)
         guard let fileExtension = file.extension else { throw Abort(.badRequest) }
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         
         guard let userId = userAuth.id else { throw Abort(.unauthorized) }
         
@@ -214,7 +212,7 @@ struct StaffController: RouteCollection {
                                            permissions: userAuth.permissions,
                                            address: try await addressController.getAddressFromId(userAuth.$address.id, for: req))
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(udpatedStaff)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(udpatedStaff)))
     }
     
     /// Getting profile picture
@@ -226,29 +224,17 @@ struct StaffController: RouteCollection {
         
         let downloadedImage = try await req.fileio.collectFile(at: "/var/www/html/Gestion/Public/\(image).\(imageExtension)")
         
-        return formatResponse(status: .ok, body: .init(buffer: downloadedImage))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(buffer: downloadedImage))
     }
     
     // MARK: Utilities functions
-    /// Getting the connected user
-    private func getUserAuthFor(_ req: Request) throws -> Staff {
-        return try req.auth.require(Staff.self)
-    }
-    
     /// Generate token when login is success
     private func generateToken(for user: Staff, in req: Request) async throws -> UserToken {
         let token = try user.generateToken()
         try await token.save(on: req.db)
         return token
     }
-    
-    /// Formating response
-    private func formatResponse(status: HTTPResponseStatus, body: Response.Body) -> Response {
-        var headers = HTTPHeaders()
-        headers.add(name: .contentType, value: "application/json")
-        return .init(status: status, headers: headers, body: body)
-    }
-        
+ 
     /// Verify password
     private func verifyPassword(password: String, passwordVerification: String) throws -> String {
         guard password == passwordVerification else {

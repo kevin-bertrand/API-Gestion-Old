@@ -10,38 +10,38 @@ import Vapor
 
 final class Address: Model, Content {
     // Name of the table
-    static let schema: String = "address"
+    static let schema: String = NameManager.Address.schema.rawValue
     
     // Unique identifier
     @ID(key: .id)
     var id: UUID?
     
     // Fields
-    @Field(key: "road_name")
+    @Field(key: NameManager.Address.roadName.rawValue.fieldKey)
     var roadName: String
     
-    @Field(key: "street_number")
+    @Field(key: NameManager.Address.streetNumber.rawValue.fieldKey)
     var streetNumber: String
     
-    @OptionalField(key: "complement")
+    @OptionalField(key: NameManager.Address.complement.rawValue.fieldKey)
     var complement: String?
     
-    @Field(key: "zip_code")
+    @Field(key: NameManager.Address.zipCode.rawValue.fieldKey)
     var zipCode: String
     
-    @Field(key: "city")
+    @Field(key: NameManager.Address.city.rawValue.fieldKey)
     var city: String
     
-    @Field(key: "country")
+    @Field(key: NameManager.Address.country.rawValue.fieldKey)
     var country: String
     
-    @Field(key: "latitude")
+    @Field(key: NameManager.Address.latitude.rawValue.fieldKey)
     var latitude: Double
     
-    @Field(key: "longitude")
+    @Field(key: NameManager.Address.longitude.rawValue.fieldKey)
     var longitude: Double
     
-    @OptionalField(key: "comment")
+    @OptionalField(key: NameManager.Address.comment.rawValue.fieldKey)
     var comment: String?
     
     // Initialization functions

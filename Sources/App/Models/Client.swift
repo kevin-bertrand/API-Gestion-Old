@@ -10,41 +10,41 @@ import Vapor
 
 final class Client: Model, Content {
     // Name of the table
-    static let schema: String = "client"
+    static let schema: String = NameManager.Client.schema.rawValue
     
     // Unique identifier
     @ID(key: .id)
     var id: UUID?
     
     // Fields
-    @OptionalField(key: "firstname")
+    @OptionalField(key: NameManager.Client.firstname.rawValue.fieldKey)
     var firstname: String?
     
-    @OptionalField(key: "lastname")
+    @OptionalField(key: NameManager.Client.lastname.rawValue.fieldKey)
     var lastname: String?
     
-    @OptionalField(key: "company")
+    @OptionalField(key: NameManager.Client.company.rawValue.fieldKey)
     var company: String?
     
-    @Field(key: "phone")
+    @Field(key: NameManager.Client.phone.rawValue.fieldKey)
     var phone: String
     
-    @Field(key: "email")
+    @Field(key: NameManager.Client.email.rawValue.fieldKey)
     var email: String
     
-    @Enum(key: "person_type")
+    @Enum(key: NameManager.Client.personType.rawValue.fieldKey)
     var personType: PersonType
     
-    @Enum(key: "gender")
+    @Enum(key: NameManager.Client.gender.rawValue.fieldKey)
     var gender: Gender
     
-    @OptionalField(key: "siret")
+    @OptionalField(key: NameManager.Client.siret.rawValue.fieldKey)
     var siret: String?
     
-    @OptionalField(key: "tva")
+    @OptionalField(key: NameManager.Client.tva.rawValue.fieldKey)
     var tva: String?
     
-    @Parent(key: "address_id")
+    @Parent(key: NameManager.Client.addressId.rawValue.fieldKey)
     var address: Address
     
     // Initialization functions

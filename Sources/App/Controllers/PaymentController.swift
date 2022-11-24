@@ -24,7 +24,7 @@ struct PaymentController: RouteCollection {
     // MARK: Routes functions
     /// Add payment method
     private func create(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         let newMethod = try req.content.decode(PayementMethod.self)
         
         guard userAuth.permissions == .admin else {
@@ -33,12 +33,12 @@ struct PaymentController: RouteCollection {
         
         try await newMethod.save(on: req.db)
         
-        return formatResponse(status: .created, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .created, body: .empty)
     }
     
     /// Update
     private func update(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         let updateMethod = try req.content.decode(PayementMethod.self)
         
         guard userAuth.permissions == .admin else {
@@ -56,12 +56,12 @@ struct PaymentController: RouteCollection {
             .filter(\.$id == paymentID)
             .update()
         
-        return formatResponse(status: .ok, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
     
     /// Delete
     private func delete(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         let paymentID = req.parameters.get("id", as: UUID.self)
         
         guard userAuth.permissions == .admin else {
@@ -74,7 +74,7 @@ struct PaymentController: RouteCollection {
         
         try await PayementMethod.find(paymentID, on: req.db)?.delete(on: req.db)
         
-        return formatResponse(status: .ok, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
     
     /// Get list
@@ -82,7 +82,7 @@ struct PaymentController: RouteCollection {
         let payments = try await PayementMethod.query(on: req.db)
             .all()
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(payments)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(payments)))
     }
     
     /// Get one payment method
@@ -93,19 +93,6 @@ struct PaymentController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(payment)))
-    }
-    
-    // MARK: Utilities functions
-    /// Getting the connected user
-    private func getUserAuthFor(_ req: Request) throws -> Staff {
-        return try req.auth.require(Staff.self)
-    }
-    
-    /// Formating response
-    private func formatResponse(status: HTTPResponseStatus, body: Response.Body) -> Response {
-        var headers = HTTPHeaders()
-        headers.add(name: .contentType, value: "application/json")
-        return .init(status: status, headers: headers, body: body)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(payment)))
     }
 }

@@ -10,20 +10,20 @@ import Vapor
 
 final class InternalReference: Model, Content {
     // Name of the table
-    static let schema: String = "internal_reference"
+    static let schema: String = NameManager.InternalReference.schema.rawValue
     
     // Unique identifier
     @ID()
     var id: UUID?
     
     // Fields
-    @Field(key: "ref")
+    @Field(key: NameManager.InternalReference.reference.rawValue.fieldKey)
     var ref: String
     
-    @OptionalParent(key: "estimate_id")
+    @OptionalParent(key: NameManager.InternalReference.estimateId.rawValue.fieldKey)
     var estimate: Estimate?
     
-    @OptionalParent(key: "invoice_id")
+    @OptionalParent(key: NameManager.InternalReference.invoiceId.rawValue.fieldKey)
     var invoice: Invoice?
     
     // Initialization functions

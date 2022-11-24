@@ -10,53 +10,53 @@ import Vapor
 
 final class Estimate: Model, Content {
     // Name of the table
-    static let schema: String = "estimate"
+    static let schema: String = NameManager.Estimate.schema.rawValue
     
     // Unique identifier
     @ID(key: .id)
     var id: UUID?
     
     // Fields
-    @Field(key: "reference")
+    @Field(key: NameManager.Estimate.reference.rawValue.fieldKey)
     var reference: String
     
-    @Field(key: "object")
+    @Field(key: NameManager.Estimate.object.rawValue.fieldKey)
     var object: String
     
-    @Field(key: "total_services")
+    @Field(key: NameManager.Estimate.totalServices.rawValue.fieldKey)
     var totalServices: Double
     
-    @Field(key: "total_materials")
+    @Field(key: NameManager.Estimate.totalMaterials.rawValue.fieldKey)
     var totalMaterials: Double
     
-    @Field(key: "total_divers")
+    @Field(key: NameManager.Estimate.totalDivers.rawValue.fieldKey)
     var totalDivers: Double
     
-    @Field(key: "total")
+    @Field(key: NameManager.Estimate.total.rawValue.fieldKey)
     var total: Double
     
-    @Timestamp(key: "creation", on: .create, format: .default)
+    @Timestamp(key: NameManager.Estimate.creation.rawValue.fieldKey, on: .create, format: .default)
     var creation: Date?
     
-    @Timestamp(key: "update", on: .update, format: .default)
+    @Timestamp(key: NameManager.Estimate.update.rawValue.fieldKey, on: .update, format: .default)
     var update: Date?
     
-    @Enum(key: "status")
+    @Enum(key: NameManager.Estimate.status.rawValue.fieldKey)
     var status: EstimateStatus
     
-    @Field(key: "limit_validity_date")
+    @Field(key: NameManager.Estimate.limitValidityDate.rawValue.fieldKey)
     var limitValidityDate: Date
     
-    @Field(key: "sending_date")
+    @Field(key: NameManager.Estimate.sendingDate.rawValue.fieldKey)
     var sendingDate: Date
     
-    @Parent(key: "client_id")
+    @Parent(key: NameManager.Estimate.clientId.rawValue.fieldKey)
     var client: Client
     
     @Siblings(through: ProductEstimate.self, from: \.$estimate, to: \.$product)
     public var products: [Product]
     
-    @Field(key: "is_archive")
+    @Field(key: NameManager.Estimate.isArchive.rawValue.fieldKey)
     var isArchive: Bool
     
     // Initialization functions

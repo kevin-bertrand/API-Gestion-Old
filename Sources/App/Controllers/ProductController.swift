@@ -27,19 +27,19 @@ struct ProductController: RouteCollection {
     private func getCategories(req: Request) async throws -> Response {
         let categories = ProductCategory.allCases
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(categories)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(categories)))
     }
     
     /// Get domains
     private func getDomains(req: Request) async throws -> Response {
         let domains = Domain.allCases
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(domains)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(domains)))
     }
     
     /// Create product
     private func create(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         let newProduct = try req.content.decode(Product.self)
         
         guard userAuth.permissions == .admin else {
@@ -48,12 +48,12 @@ struct ProductController: RouteCollection {
         
         try await newProduct.save(on: req.db)
         
-        return formatResponse(status: .created, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .created, body: .empty)
     }
         
     /// Update product
     private func update(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         let updatedProduct = try req.content.decode(Product.self)
         let productId = req.parameters.get("id")
         
@@ -70,7 +70,7 @@ struct ProductController: RouteCollection {
             .filter(\.$id == id)
             .update()
         
-        return formatResponse(status: .ok, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
     
     /// Get product list
@@ -133,22 +133,10 @@ struct ProductController: RouteCollection {
             products = try await getAllProducts(req: req)
         }
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(products)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(products)))
     }
     
     // MARK: Utilities functions
-    /// Getting the connected user
-    private func getUserAuthFor(_ req: Request) throws -> Staff {
-        return try req.auth.require(Staff.self)
-    }
-    
-    /// Formating response
-    private func formatResponse(status: HTTPResponseStatus, body: Response.Body) -> Response {
-        var headers = HTTPHeaders()
-        headers.add(name: .contentType, value: "application/json")
-        return .init(status: status, headers: headers, body: body)
-    }
-    
     /// Get all product list
     private func getAllProducts(req: Request) async throws -> [Product] {
         return try await Product.query(on: req.db)

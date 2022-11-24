@@ -12,7 +12,6 @@ import Vapor
 struct RevenuesController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let revenuesGroup = routes.grouped("revenues")
-        revenuesGroup.get("add", use: addYearRevenue)
         
         let tokenGroup = revenuesGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("year", ":year", use: getYearRevenue)
@@ -21,11 +20,6 @@ struct RevenuesController: RouteCollection {
     }
     
     // MARK: Routes functions
-    private func addYearRevenue(req: Request) async throws -> Response {
-        
-        return formatResponse(status: .ok, body: .empty)
-    }
-    
     /// Get year revenue
     private func getYearRevenue(req: Request) async throws -> Response {
         let year = req.parameters.get("year", as: Int.self)
@@ -33,9 +27,15 @@ struct RevenuesController: RouteCollection {
         guard let year = year else { throw Abort(.notAcceptable) }
         
         if let revenues = try await YearRevenue.query(on: req.db).filter(\.$year == year).first() {
-            return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(revenues)))
+            return GlobalFunctions.shared.formatResponse(status: .ok,
+                                                         body: .init(data: try JSONEncoder().encode(revenues)))
         } else {
-            return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(YearRevenue(year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0))))
+            return GlobalFunctions.shared.formatResponse(status: .ok,
+                                                         body: .init(data: try JSONEncoder().encode(YearRevenue(year: year,
+                                                                                                                totalServices: 0,
+                                                                                                                totalMaterials: 0,
+                                                                                                                totalDivers: 0,
+                                                                                                                grandTotal: 0))))
         }
     }
     
@@ -47,9 +47,16 @@ struct RevenuesController: RouteCollection {
         guard let year = year, let month = month else { throw Abort(.notAcceptable) }
         
         if let revenues = try await MonthRevenue.query(on: req.db).filter(\.$month == month).filter(\.$year == year).first() {
-            return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(revenues)))
+            return GlobalFunctions.shared.formatResponse(status: .ok,
+                                                         body: .init(data: try JSONEncoder().encode(revenues)))
         } else {
-            return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(MonthRevenue(month: month, year: year, totalServices: 0, totalMaterials: 0, totalDivers: 0, grandTotal: 0))))
+            return GlobalFunctions.shared.formatResponse(status: .ok,
+                                                         body: .init(data: try JSONEncoder().encode(MonthRevenue(month: month,
+                                                                                                                 year: year,
+                                                                                                                 totalServices: 0,
+                                                                                                                 totalMaterials: 0,
+                                                                                                                 totalDivers: 0,
+                                                                                                                 grandTotal: 0))))
         }
     }
     
@@ -69,14 +76,6 @@ struct RevenuesController: RouteCollection {
             }
         }
     
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(revenues)))
-    }
-    
-    // MARK: Utilities functions
-    /// Formating response
-    private func formatResponse(status: HTTPResponseStatus, body: Response.Body) -> Response {
-        var headers = HTTPHeaders()
-        headers.add(name: .contentType, value: "application/json")
-        return .init(status: status, headers: headers, body: body)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(revenues)))
     }
 }

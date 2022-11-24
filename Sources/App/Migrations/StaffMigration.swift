@@ -11,30 +11,30 @@ import Vapor
 struct StaffMigration: AsyncMigration {
     // Create DB
     func prepare(on database: Database) async throws {
-        let gender = try await database.enum("gender").read()
-        let position = try await database.enum("position").read()
-        let permissions = try await database.enum("permissions").read()
+        let gender = try await database.enum(NameManager.Enumeration.gender.rawValue).read()
+        let position = try await database.enum(NameManager.Enumeration.position.rawValue).read()
+        let permissions = try await database.enum(NameManager.Enumeration.permissions.rawValue).read()
         
-        try await database.schema(Staff.schema)
+        try await database.schema(NameManager.Staff.schema.rawValue)
             .id()
-            .field("profile_picture", .string)
-            .field("firstname", .string, .required)
-            .field("lastname", .string, .required)
-            .field("phone", .string, .required)
-            .field("email", .string, .required)
-            .field("gender", gender, .required)
-            .field("position", position, .required)
-            .field("role", .string, .required)
-            .field("password_hash", .string, .required)
-            .field("permissions", permissions, .required)
-            .field("address_id", .uuid, .required, .references(Address.schema, "id"))
-            .unique(on: "email")
+            .field(NameManager.Staff.profilePicture.rawValue.fieldKey, .string)
+            .field(NameManager.Staff.firstname.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Staff.lastname.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Staff.phone.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Staff.email.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Staff.gender.rawValue.fieldKey, gender, .required)
+            .field(NameManager.Staff.position.rawValue.fieldKey, position, .required)
+            .field(NameManager.Staff.role.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Staff.passwordHash.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Staff.permissions.rawValue.fieldKey, permissions, .required)
+            .field(NameManager.Staff.addressId.rawValue.fieldKey, .uuid, .required, .references(Address.schema, "id"))
+            .unique(on: NameManager.Staff.email.rawValue.fieldKey)
             .create()
     }
     
     // Deleted DB
     func revert(on database: Database) async throws {
-        try await database.schema(Staff.schema).delete()
+        try await database.schema(NameManager.Staff.schema.rawValue).delete()
     }
 }
 

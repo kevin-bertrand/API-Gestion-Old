@@ -11,20 +11,20 @@ import Vapor
 struct YearRevenueMigration: AsyncMigration {
     // Create DB
     func prepare(on database: Database) async throws {
-        try await database.schema(YearRevenue.schema)
+        try await database.schema(NameManager.YearRevenue.schema.rawValue)
             .id()
-            .field("year", .int32, .required)
-            .field("total_services", .double, .required)
-            .field("total_materials", .double, .required)
-            .field("total_divers", .double, .required)
-            .field("grand_total", .double, .required)
-            .unique(on: "year")
+            .field(NameManager.YearRevenue.year.rawValue.fieldKey, .int32, .required)
+            .field(NameManager.YearRevenue.totalServices.rawValue.fieldKey, .double, .required)
+            .field(NameManager.YearRevenue.totalMaterials.rawValue.fieldKey, .double, .required)
+            .field(NameManager.YearRevenue.totalDivers.rawValue.fieldKey, .double, .required)
+            .field(NameManager.YearRevenue.grandTotal.rawValue.fieldKey, .double, .required)
+            .unique(on: NameManager.YearRevenue.year.rawValue.fieldKey)
             .create()
     }
     
     // Deleted DB
     func revert(on database: Database) async throws {
-        try await database.schema(YearRevenue.schema).delete()
+        try await database.schema(NameManager.YearRevenue.schema.rawValue).delete()
     }
 }
 

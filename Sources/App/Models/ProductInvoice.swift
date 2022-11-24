@@ -10,23 +10,23 @@ import Vapor
 
 final class ProductInvoice: Model, Content {
     // Name of the table
-    static let schema: String = "product_invoice"
+    static let schema: String = NameManager.ProductInvoice.schema.rawValue
     
     // Unique identifier
     @ID(key: .id)
     var id: UUID?
     
     // Fields
-    @Field(key: "quantity")
+    @Field(key: NameManager.ProductInvoice.quantity.rawValue.fieldKey)
     var quantity: Double
     
-    @Field(key: "reduction")
+    @Field(key: NameManager.ProductInvoice.reduction.rawValue.fieldKey)
     var reduction: Double
     
-    @Parent(key: "product_id")
+    @Parent(key: NameManager.ProductInvoice.productId.rawValue.fieldKey)
     var product: Product
     
-    @Parent(key: "invoice_id")
+    @Parent(key: NameManager.ProductInvoice.invoiceId.rawValue.fieldKey)
     var invoice: Invoice
     
     // Initialization functions

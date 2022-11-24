@@ -11,27 +11,27 @@ import Vapor
 struct ClientMigration: AsyncMigration {
     // Create DB
     func prepare(on database: Database) async throws {
-        let personType = try await database.enum("person_type").read()
-        let gender = try await database.enum("gender").read()
+        let personType = try await database.enum(NameManager.Enumeration.personType.rawValue).read()
+        let gender = try await database.enum(NameManager.Enumeration.gender.rawValue).read()
         
-        try await database.schema(Client.schema)
+        try await database.schema(NameManager.Client.schema.rawValue)
             .id()
-            .field("firstname", .string)
-            .field("lastname", .string)
-            .field("company", .string)
-            .field("phone", .string, .required)
-            .field("email", .string, .required)
-            .field("person_type", personType, .required)
-            .field("gender", gender, .required)
-            .field("siret", .string)
-            .field("tva", .string)
-            .field("address_id", .uuid, .required, .references(Address.schema, "id"))
+            .field(NameManager.Client.firstname.rawValue.fieldKey, .string)
+            .field(NameManager.Client.lastname.rawValue.fieldKey, .string)
+            .field(NameManager.Client.company.rawValue.fieldKey, .string)
+            .field(NameManager.Client.phone.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Client.email.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Client.personType.rawValue.fieldKey, personType, .required)
+            .field(NameManager.Client.gender.rawValue.fieldKey, gender, .required)
+            .field(NameManager.Client.siret.rawValue.fieldKey, .string)
+            .field(NameManager.Client.tva.rawValue.fieldKey, .string)
+            .field(NameManager.Client.addressId.rawValue.fieldKey, .uuid, .required, .references(Address.schema, "id"))
             .create()
     }
     
     // Deleted DB
     func revert(on database: Database) async throws {
-        try await database.schema(Client.schema).delete()
+        try await database.schema(NameManager.Client.schema.rawValue).delete()
     }
 }
 

@@ -11,23 +11,23 @@ import Vapor
 struct AddressMigration: AsyncMigration {
     // Create DB
     func prepare(on database: Database) async throws {
-        try await database.schema(Address.schema)
+        try await database.schema(NameManager.Address.schema.rawValue)
             .id()
-            .field("road_name", .string, .required)
-            .field("street_number", .string, .required)
-            .field("complement", .string)
-            .field("zip_code", .string, .required)
-            .field("city", .string, .required)
-            .field("country", .string, .required)
-            .field("latitude", .double, .required)
-            .field("longitude", .double, .required)
-            .field("comment", .string)
+            .field(NameManager.Address.roadName.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Address.streetNumber.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Address.complement.rawValue.fieldKey, .string)
+            .field(NameManager.Address.zipCode.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Address.city.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Address.country.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Address.latitude.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Address.longitude.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Address.comment.rawValue.fieldKey, .string)
             .create()
     }
     
     // Deleted DB
     func revert(on database: Database) async throws {
-        try await database.schema(Address.schema).delete()
+        try await database.schema(NameManager.Address.schema.rawValue).delete()
     }
 }
 

@@ -11,23 +11,23 @@ import Vapor
 struct ProductMigration: AsyncMigration {
     // Create DB
     func prepare(on database: Database) async throws {
-        let productCategory = try await database.enum("product_category").read()
-        let domain = try await database.enum("domain").read()
+        let productCategory = try await database.enum(NameManager.Enumeration.productCategory.rawValue).read()
+        let domain = try await database.enum(NameManager.Enumeration.domain.rawValue).read()
         
-        try await database.schema(Product.schema)
+        try await database.schema(NameManager.Product.schema.rawValue)
             .id()
-            .field("product_category", productCategory, .required)
-            .field("domain", domain, .required)
-            .field("title", .string, .required)
-            .field("unity", .string)
-            .field("price", .double, .required)
-            .unique(on: "title")
+            .field(NameManager.Product.productCategory.rawValue.fieldKey, productCategory, .required)
+            .field(NameManager.Product.domain.rawValue.fieldKey, domain, .required)
+            .field(NameManager.Product.title.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Product.unity.rawValue.fieldKey, .string)
+            .field(NameManager.Product.price.rawValue.fieldKey, .double, .required)
+            .unique(on: NameManager.Product.title.rawValue.fieldKey)
             .create()
     }
     
     // Deleted DB
     func revert(on database: Database) async throws {
-        try await database.schema(Product.schema).delete()
+        try await database.schema(NameManager.Product.schema.rawValue).delete()
     }
 }
 

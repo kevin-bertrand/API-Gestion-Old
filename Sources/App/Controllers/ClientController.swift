@@ -25,7 +25,7 @@ struct ClientController: RouteCollection {
     // MARK: Routes functions
     /// Create client
     private func create(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         let newClient = try req.content.decode(Client.Informations.self)
         
         guard userAuth.permissions == .admin else {
@@ -44,12 +44,12 @@ struct ClientController: RouteCollection {
                          addressID: try await addressController.create(newClient.address, for: req).requireID())
         .save(on: req.db)
         
-        return formatResponse(status: .created, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .created, body: .empty)
     }
     
     /// Update client
     private func update(req: Request) async throws -> Response {
-        let userAuth = try getUserAuthFor(req)
+        let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
         let updatedClient = try req.content.decode(Client.Informations.self)
         let clientId = req.parameters.get("id", as: UUID.self)
         
@@ -75,7 +75,7 @@ struct ClientController: RouteCollection {
             .filter(\.$id == clientId)
             .update()
         
-        return formatResponse(status: .ok, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
     
     /// Get client list
@@ -98,19 +98,6 @@ struct ClientController: RouteCollection {
                                                         address: try await addressController.getAddressFromId(client.$address.id, for: req)))
         }
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(processedClients)))
-    }
-    
-    // MARK: Utilities functions
-    /// Getting the connected user
-    private func getUserAuthFor(_ req: Request) throws -> Staff {
-        return try req.auth.require(Staff.self)
-    }
-    
-    /// Formating response
-    private func formatResponse(status: HTTPResponseStatus, body: Response.Body) -> Response {
-        var headers = HTTPHeaders()
-        headers.add(name: .contentType, value: "application/json")
-        return .init(status: status, headers: headers, body: body)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(processedClients)))
     }
 }

@@ -11,17 +11,17 @@ import Vapor
 struct UserTokenMigration: AsyncMigration {
     // Create DB
     func prepare(on database: Database) async throws {
-        try await database.schema(UserToken.schema)
+        try await database.schema(NameManager.UserToken.schema.rawValue)
             .id()
-            .field("creation", .datetime, .required)
-            .field("value", .string, .required)
-            .field("staff_id", .uuid, .required, .references(Staff.schema, "id", onDelete: .cascade))
+            .field(NameManager.UserToken.creation.rawValue.fieldKey, .datetime, .required)
+            .field(NameManager.UserToken.value.rawValue.fieldKey, .string, .required)
+            .field(NameManager.UserToken.staffId.rawValue.fieldKey, .uuid, .required, .references(Staff.schema, "id", onDelete: .cascade))
             .create()
     }
     
     // Deleted DB
     func revert(on database: Database) async throws {
-        try await database.schema(UserToken.schema).delete()
+        try await database.schema(NameManager.UserToken.schema.rawValue).delete()
     }
 }
 

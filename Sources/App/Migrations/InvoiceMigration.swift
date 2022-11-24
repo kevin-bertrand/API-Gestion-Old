@@ -11,37 +11,37 @@ import Vapor
 struct InvoiceMigration: AsyncMigration {
     // Create DB
     func prepare(on database: Database) async throws {
-        let invoiceStatus = try await database.enum("invoice_status").read()
+        let invoiceStatus = try await database.enum(NameManager.Enumeration.invoiceStatus.rawValue).read()
         
-        try await database.schema(Invoice.schema)
+        try await database.schema(NameManager.Invoice.schema.rawValue)
             .id()
-            .field("reference", .string, .required)
-            .field("object", .string, .required)
-            .field("total_services", .double, .required)
-            .field("total_materials", .double, .required)
-            .field("total_divers", .double, .required)
-            .field("total", .double, .required)
-            .field("grand_total", .double, .required)
-            .field("creation", .datetime)
-            .field("update", .datetime)
-            .field("status", invoiceStatus, .required)
-            .field("limit_payment_date", .date, .required)
-            .field("facturation_date", .date, .required)
-            .field("delay_days", .int32, .required)
-            .field("total_delay", .double, .required)
-            .field("client_id", .uuid, .required, .references(Client.schema, "id"))
-            .field("payment_id", .uuid, .references(PayementMethod.schema, "id"))
-            .field("is_archive", .bool, .required)
-            .field("maximum_interests", .double)
-            .field("limit_max_interests", .date)
-            .field("comment", .string)
-            .unique(on: "reference")
+            .field(NameManager.Invoice.reference.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Invoice.object.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Invoice.totalServices.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Invoice.totalMaterials.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Invoice.totalDivers.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Invoice.total.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Invoice.grandTotal.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Invoice.creation.rawValue.fieldKey, .datetime)
+            .field(NameManager.Invoice.update.rawValue.fieldKey, .datetime)
+            .field(NameManager.Invoice.status.rawValue.fieldKey, invoiceStatus, .required)
+            .field(NameManager.Invoice.limitPaymentDate.rawValue.fieldKey, .date, .required)
+            .field(NameManager.Invoice.facturationDate.rawValue.fieldKey, .date, .required)
+            .field(NameManager.Invoice.delayDays.rawValue.fieldKey, .int32, .required)
+            .field(NameManager.Invoice.totalDelay.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Invoice.clientId.rawValue.fieldKey, .uuid, .required, .references(Client.schema, "id"))
+            .field(NameManager.Invoice.paymentId.rawValue.fieldKey, .uuid, .references(PayementMethod.schema, "id"))
+            .field(NameManager.Invoice.isArchive.rawValue.fieldKey, .bool, .required)
+            .field(NameManager.Invoice.maxInterests.rawValue.fieldKey, .double)
+            .field(NameManager.Invoice.limitMaxInterests.rawValue.fieldKey, .date)
+            .field(NameManager.Invoice.comment.rawValue.fieldKey, .string)
+            .unique(on: NameManager.Invoice.reference.rawValue.fieldKey)
             .create()
     }
     
     // Deleted DB
     func revert(on database: Database) async throws {
-        try await database.schema(Invoice.schema).delete()
+        try await database.schema(NameManager.Invoice.schema.rawValue).delete()
     }
 }
 

@@ -11,30 +11,30 @@ import Vapor
 struct EstimateMigration: AsyncMigration {
     // Create DB
     func prepare(on database: Database) async throws {
-        let estimateStatus = try await database.enum("estimate_status").read()
+        let estimateStatus = try await database.enum(NameManager.Enumeration.estimateStatus.rawValue).read()
         
-        try await database.schema(Estimate.schema)
+        try await database.schema(NameManager.Estimate.schema.rawValue)
             .id()
-            .field("reference", .string, .required)
-            .field("object", .string, .required)
-            .field("total_services", .double, .required)
-            .field("total_materials", .double, .required)
-            .field("total_divers", .double, .required)
-            .field("total", .double, .required)
-            .field("creation", .datetime)
-            .field("update", .datetime)
-            .field("status", estimateStatus, .required)
-            .field("limit_validity_date", .date, .required)
-            .field("client_id", .uuid, .required, .references(Client.schema, "id"))
-            .field("sending_date", .date, .required)
-            .field("is_archive", .bool, .required)
-            .unique(on: "reference")
+            .field(NameManager.Estimate.reference.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Estimate.object.rawValue.fieldKey, .string, .required)
+            .field(NameManager.Estimate.totalServices.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Estimate.totalMaterials.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Estimate.totalDivers.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Estimate.total.rawValue.fieldKey, .double, .required)
+            .field(NameManager.Estimate.creation.rawValue.fieldKey, .datetime)
+            .field(NameManager.Estimate.update.rawValue.fieldKey, .datetime)
+            .field(NameManager.Estimate.status.rawValue.fieldKey, estimateStatus, .required)
+            .field(NameManager.Estimate.limitValidityDate.rawValue.fieldKey, .date, .required)
+            .field(NameManager.Estimate.clientId.rawValue.fieldKey, .uuid, .required, .references(Client.schema, "id"))
+            .field(NameManager.Estimate.sendingDate.rawValue.fieldKey, .date, .required)
+            .field(NameManager.Estimate.isArchive.rawValue.fieldKey, .bool, .required)
+            .unique(on: NameManager.Estimate.reference.rawValue.fieldKey)
             .create()
     }
     
     // Deleted DB
     func revert(on database: Database) async throws {
-        try await database.schema(Estimate.schema).delete()
+        try await database.schema(NameManager.Estimate.schema.rawValue).delete()
     }
 }
 

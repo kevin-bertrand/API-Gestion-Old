@@ -55,7 +55,7 @@ struct EstimateController: RouteCollection {
             }
         }
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode("D-\(date)-\(number)")))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode("D-\(date)-\(number)")))
     }
     
     /// Create
@@ -90,7 +90,7 @@ struct EstimateController: RouteCollection {
             try await ProductEstimate(quantity: product.quantity, productID: product.productID, estimateID: try estimate.requireID()).save(on: req.db)
         }
         
-        return formatResponse(status: .created, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .created, body: .empty)
     }
     
     /// Update lines
@@ -144,7 +144,7 @@ struct EstimateController: RouteCollection {
             .filter(\.$estimate.$id == updateEstimate.id)
             .update()
         
-        return formatResponse(status: .ok, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
     
     /// Getting estimate list
@@ -163,7 +163,7 @@ struct EstimateController: RouteCollection {
             estimates = try await getAllEstimates(req: req)
         }
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(estimates)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(estimates)))
     }
     
     /// Get estimate
@@ -218,7 +218,7 @@ struct EstimateController: RouteCollection {
                                                                                      address: try await addressController.getAddressFromId(client.$address.id, for: req)),
                                                          products: products)
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(estimateInformations)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(estimateInformations)))
     }
     
     /// Export estimate to invoice
@@ -285,7 +285,7 @@ struct EstimateController: RouteCollection {
             .filter(\.$id == estimateId)
             .update()
         
-        return formatResponse(status: addInvoiceResponse.status, body: .init(buffer: responseBody))
+        return GlobalFunctions.shared.formatResponse(status: addInvoiceResponse.status, body: .init(buffer: responseBody))
     }
     
     /// Generate a PDF from the Database for a selected ID
@@ -371,18 +371,6 @@ struct EstimateController: RouteCollection {
     }
     
     // MARK: Utilities functions
-    /// Getting the connected user
-    private func getUserAuthFor(_ req: Request) throws -> Staff {
-        return try req.auth.require(Staff.self)
-    }
-    
-    /// Formating response
-    private func formatResponse(status: HTTPResponseStatus, body: Response.Body) -> Response {
-        var headers = HTTPHeaders()
-        headers.add(name: .contentType, value: "application/json")
-        return .init(status: status, headers: headers, body: body)
-    }
-    
     /// Getting all estimates
     private func getAllEstimates(req: Request) async throws -> [Estimate.Summary] {
         return formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db).with(\.$client).sort(\.$reference).all())

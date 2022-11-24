@@ -10,26 +10,26 @@ import Vapor
 
 final class YearRevenue: Model, Content {
     // Name of the table
-    static let schema: String = "year_revenue"
+    static let schema: String = NameManager.YearRevenue.schema.rawValue
     
     // Unique identifier
     @ID(key: .id)
     var id: UUID?
     
     // Fields
-    @Field(key: "year")
+    @Field(key: NameManager.YearRevenue.year.rawValue.fieldKey)
     var year: Int
     
-    @Field(key: "total_services")
+    @Field(key: NameManager.YearRevenue.totalServices.rawValue.fieldKey)
     var totalServices: Double
     
-    @Field(key: "total_materials")
+    @Field(key: NameManager.YearRevenue.totalMaterials.rawValue.fieldKey)
     var totalMaterials: Double
     
-    @Field(key: "total_divers")
+    @Field(key: NameManager.YearRevenue.totalDivers.rawValue.fieldKey)
     var totalDivers: Double
     
-    @Field(key: "grand_total")
+    @Field(key: NameManager.YearRevenue.grandTotal.rawValue.fieldKey)
     var grandTotal: Double
     
     // Initialization functions

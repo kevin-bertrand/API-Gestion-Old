@@ -10,20 +10,20 @@ import Vapor
 
 final class PayementMethod: Model, Content {
     // Name of the table
-    static let schema: String = "payement_method"
+    static let schema: String = NameManager.PaymentMethod.schema.rawValue
     
     // Unique identifier
     @ID(key: .id)
     var id: UUID?
     
     // Fields
-    @Field(key: "title")
+    @Field(key: NameManager.PaymentMethod.title.rawValue.fieldKey)
     var title: String
     
-    @Field(key: "iban")
+    @Field(key: NameManager.PaymentMethod.iban.rawValue.fieldKey)
     var iban: String
     
-    @Field(key: "bic")
+    @Field(key: NameManager.PaymentMethod.bic.rawValue.fieldKey)
     var bic: String
     
     // Initialization functions

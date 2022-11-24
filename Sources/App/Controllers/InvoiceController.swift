@@ -55,7 +55,7 @@ struct InvoiceController: RouteCollection {
             }
         }
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode("F-\(date)-\(number)")))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode("F-\(date)-\(number)")))
     }
     
     /// Create invoice
@@ -99,7 +99,7 @@ struct InvoiceController: RouteCollection {
             try await ProductInvoice(quantity: product.quantity, productID: product.productID, invoiceID: invoiceId).save(on: req.db)
         }
         
-        return formatResponse(status: .created, body: .init(data: try JSONEncoder().encode("\(invoice.reference) is created!")))
+        return GlobalFunctions.shared.formatResponse(status: .created, body: .init(data: try JSONEncoder().encode("\(invoice.reference) is created!")))
     }
     
     /// Update invoice
@@ -159,7 +159,7 @@ struct InvoiceController: RouteCollection {
             .filter(\.$invoice.$id == updatedInvoice.id)
             .update()
         
-        return formatResponse(status: .ok, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
     
     /// Setting is payed
@@ -199,7 +199,7 @@ struct InvoiceController: RouteCollection {
                                         in: req)
         }
         
-        return formatResponse(status: .ok, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
     
     /// Getting invoice list
@@ -213,7 +213,7 @@ struct InvoiceController: RouteCollection {
             invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db).with(\.$client).sort(\.$reference).all())
         }
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(invoices)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(invoices)))
     }
     
     /// Getting invoice
@@ -291,7 +291,7 @@ struct InvoiceController: RouteCollection {
                                                        limitMaximumInterests: invoice.limitMaxInterests,
                                                        maxInterests: invoice.maxInterests)
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(invoiceInformations)))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(invoiceInformations)))
     }
     
     private func pdf(req: Request) async throws -> Response {
@@ -464,22 +464,10 @@ struct InvoiceController: RouteCollection {
             }
         }
         
-        return formatResponse(status: .ok, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
     
     // MARK: Utilities functions
-    /// Getting the connected user
-    private func getUserAuthFor(_ req: Request) throws -> Staff {
-        return try req.auth.require(Staff.self)
-    }
-    
-    /// Formating response
-    private func formatResponse(status: HTTPResponseStatus, body: Response.Body) -> Response {
-        var headers = HTTPHeaders()
-        headers.add(name: .contentType, value: "application/json")
-        return .init(status: status, headers: headers, body: body)
-    }
-    
     /// Format invoice summary
     private func formatInvoiceSummaray(_ invoices: [Invoice]) -> [Invoice.Summary] {
         var invoiceSummary: [Invoice.Summary] = []

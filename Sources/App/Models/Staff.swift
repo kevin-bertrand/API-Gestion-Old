@@ -10,44 +10,44 @@ import Vapor
 
 final class Staff: Model, Content {
     // Name of the table
-    static let schema: String = "staff"
+    static let schema: String = NameManager.Staff.schema.rawValue
     
     // Unique identifier
     @ID(key: .id)
     var id: UUID?
     
     // Fields
-    @OptionalField(key: "profile_picture")
+    @OptionalField(key: NameManager.Staff.profilePicture.rawValue.fieldKey)
     var profilePicture: String?
     
-    @Field(key: "firstname")
+    @Field(key: NameManager.Staff.firstname.rawValue.fieldKey)
     var firstname: String
     
-    @Field(key: "lastname")
+    @Field(key: NameManager.Staff.lastname.rawValue.fieldKey)
     var lastname: String
     
-    @Field(key: "phone")
+    @Field(key: NameManager.Staff.phone.rawValue.fieldKey)
     var phone: String
     
-    @Field(key: "email")
+    @Field(key: NameManager.Staff.email.rawValue.fieldKey)
     var email: String
     
-    @Enum(key: "gender")
+    @Enum(key: NameManager.Staff.gender.rawValue.fieldKey)
     var gender: Gender
     
-    @Enum(key: "position")
+    @Enum(key: NameManager.Staff.position.rawValue.fieldKey)
     var position: Position
     
-    @Field(key: "role")
+    @Field(key: NameManager.Staff.role.rawValue.fieldKey)
     var role: String
     
-    @Field(key: "password_hash")
+    @Field(key: NameManager.Staff.passwordHash.rawValue.fieldKey)
     var passwordHash: String
     
-    @Enum(key: "permissions")
+    @Enum(key: NameManager.Staff.permissions.rawValue.fieldKey)
     var permissions: Permissions
     
-    @Parent(key: "address_id")
+    @Parent(key: NameManager.Staff.addressId.rawValue.fieldKey)
     var address: Address
     
     // Initialization functions

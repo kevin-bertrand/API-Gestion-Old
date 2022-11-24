@@ -83,20 +83,7 @@ struct InternalReferenceController: RouteCollection {
             newReference.append("001")
         }
         
-        return formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(newReference)))
-    }
-    
-    // MARK: Utilities functions
-    /// Getting the connected user
-    private func getUserAuthFor(_ req: Request) throws -> Staff {
-        return try req.auth.require(Staff.self)
-    }
-    
-    /// Formating response
-    private func formatResponse(status: HTTPResponseStatus, body: Response.Body) -> Response {
-        var headers = HTTPHeaders()
-        headers.add(name: .contentType, value: "application/json")
-        return .init(status: status, headers: headers, body: body)
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(newReference)))
     }
 }
 

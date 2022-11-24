@@ -10,20 +10,20 @@ import Vapor
 
 final class UserToken: Model, Content {
     // Name of the table
-    static let schema: String = "user_token"
+    static let schema: String = NameManager.UserToken.schema.rawValue
     
     // Unique identifier
     @ID(key: .id)
     var id: UUID?
     
     // Fields
-    @Field(key: "creation")
+    @Field(key: NameManager.UserToken.creation.rawValue.fieldKey)
     var creation: Date
     
-    @Field(key: "value")
+    @Field(key: NameManager.UserToken.value.rawValue.fieldKey)
     var value: String
     
-    @Parent(key: "staff_id")
+    @Parent(key: NameManager.UserToken.staffId.rawValue.fieldKey)
     var staff: Staff
     
     // Initialization functions
