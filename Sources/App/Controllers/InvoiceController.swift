@@ -664,15 +664,9 @@ struct InvoiceController: RouteCollection {
                     Ceci est un message automatique, merci de ne pas y répondre.
                     """
         
-        let mail = MailgunMessage(from:  Environment.get("MAILGUN_FROM_EMAIL") ?? "no-reply",
-                                  to: client.email,
-                                  cc: "contact@desyntic.com",
-                                  subject: "[Rappel] Règlement de votre facture \(invoice.reference)",
-                                  text: message)
-        
-        _ = req.mailgun().send(mail).map({ _ in
-            return true
-        })
+        try GlobalFunctions.shared.sendEmail(to: client.email,
+                                         withTitle: "[Rappel] Règlement de votre facture \(invoice.reference)",
+                                         andMessage: message)
     }
     
     /// Getting name for email
