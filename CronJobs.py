@@ -67,8 +67,8 @@ def SelectEstimates():
 ###############################################
 ## Main
 ###############################################
-token = response.post("http://gestion.desyntic.com:2574/staff/login", auth=(USERNAME, PASSWORD))
-print(token.text)
+token = response.post("http://gestion.desyntic.com:2574/staff/login", auth=(USERNAME, PASSWORD)).json()["token"]
+print(token)
 # SelectInvoices()
 # SelectEstimates()
 # conn.commit()
