@@ -58,7 +58,7 @@ class GlobalFunctions {
                                    bcc: [PersonEmailInfo(name: "Desyntic", email: "contact@desyntic.com")],
                                    subject: title,
                                    htmlContent: String(decoding: mail, as: UTF8.self),
-                                   attachment: [.init(name: "\(invoice.reference).pdf", content: String(decoding: pdfData, as: UTF8.self))])
+                                   attachment: [.init(name: "\(invoice.reference).pdf", content: pdfData)])
 
         let headers: HTTPHeaders = [
             "api-key": apiKey,
@@ -88,5 +88,5 @@ struct PersonEmailInfo: Codable {
 
 struct AttachementFiles: Codable {
     let name: String
-    let content: String
+    let content: Data
 }
