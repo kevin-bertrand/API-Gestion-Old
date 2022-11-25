@@ -17,6 +17,8 @@ struct InvoiceController: RouteCollection {
     func boot(routes: RoutesBuilder) throws {
         let invoiceGroup = routes.grouped("invoice")
         invoiceGroup.patch("delays", ":id", use: checkDelays)
+        invoiceGroup.patch("remainder", ":id", use: sendRemainder)
+        invoiceGroup.patch("last", ":id", use: sendLastDayRemainder)
         
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
@@ -294,6 +296,7 @@ struct InvoiceController: RouteCollection {
         return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(invoiceInformations)))
     }
     
+    /// Export to PDF
     private func pdf(req: Request) async throws -> Response {
         let document = Document(margins: 15)
         
@@ -424,6 +427,38 @@ struct InvoiceController: RouteCollection {
         return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(data: pdf))
     }
     
+    /// Send invoice remainder
+    private func sendRemainder(_ req: Request) async throws -> Response {
+        let invoiceId = req.parameters.get("id", as: UUID.self)
+        
+        guard let invoiceId = invoiceId,
+              let invoice = try await Invoice.find(invoiceId, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        
+        if invoice.status == .sent || invoice.status == .overdue {
+            let limitDate = Calendar.current.date(byAdding: .day, value: 7, to: invoice.limitPayementDate)
+            let today = Date()
+            
+            if limitDate == today {
+                try await sendDelayEmail(for: invoiceId, on: req)
+            }
+        }
+        
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
+    }
+    
+    /// Send invoice last day remainder
+    private func sendLastDayRemainder(_ req: Request) async throws -> Response {
+        let invoiceId = req.parameters.get("id", as: UUID.self)
+        guard let invoiceId = invoiceId,
+              let invoice = try await Invoice.find(invoiceId, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
+    }
+    
     /// Check if the invoice is delayed
     private func checkDelays(_ req: Request) async throws -> Response {
         let invoiceId = req.parameters.get("id", as: UUID.self)
@@ -549,24 +584,7 @@ struct InvoiceController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        var name = ""
-        
-        if let lastname = client.lastname {
-            name = "\(client.gender == .man ? "M." : client.gender == .woman ? "Mme." : "")\(lastname)"
-        }
-        
-        if let company = client.company {
-            if name.isEmpty {
-                name = company
-            } else {
-                name.append(" (\(company))")
-            }
-        }
-        
-        if name.isEmpty {
-            name = "Madame, Monsieur"
-        }
-        
+        let name = getNameForEmail(of: client)
         var interestMessage = ""
         
         if let maxInterests = invoice.maxInterests,
@@ -607,9 +625,76 @@ struct InvoiceController: RouteCollection {
             return true
         })
     }
+    
+    /// Send remainder email
+    private func sendRemainderEmail(for invoiceId: UUID, on req: Request, withRemainder type: RemainderType) async throws {
+        guard let invoice = try await Invoice.find(invoiceId, on: req.db),
+              let client = try await Client.find(invoice.$client.id, on: req.db) else {
+            throw Abort(.notFound)
+        }
+        
+        let name = getNameForEmail(of: client)
+        
+        var remainderMessage = ""
+        
+        switch type {
+        case .lastDay:
+            remainderMessage = "Pour rappel, vous avez jusqu'à aujourd'hui pour réglé votre facture. A compté de demain, vous serez redevables d'intérêts."
+        case .sevenDays:
+            remainderMessage = "Pour rappel, vous avez jusqu'au \(invoice.limitPayementDate.dateOnly) pour régler votre facture."
+        }
+        
+        let message = """
+                    \(name),
+                    
+                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.
+                    \(remainderMessage)
+                    
+                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com
+                    -------------------------------------------------------------------------------------------------
+                    Ceci est un message automatique, merci de ne pas y répondre.
+                    """
+        
+        let mail = MailgunMessage(from:  Environment.get("MAILGUN_FROM_EMAIL") ?? "no-reply",
+                                  to: client.email,
+                                  cc: "contact@desyntic.com",
+                                  subject: "[Rappel] Règlement de votre facture \(invoice.reference)",
+                                  text: message)
+        
+        _ = req.mailgun().send(mail).map({ _ in
+            return true
+        })
+    }
+    
+    /// Getting name for email
+    private func getNameForEmail(of client: Client) -> String {
+        var name = ""
+        
+        if let lastname = client.lastname {
+            name = "\(client.gender == .man ? "M." : client.gender == .woman ? "Mme." : "")\(lastname)"
+        }
+        
+        if let company = client.company {
+            if name.isEmpty {
+                name = company
+            } else {
+                name.append(" (\(company))")
+            }
+        }
+        
+        if name.isEmpty {
+            name = "Madame, Monsieur"
+        }
+        
+        return name
+    }
 }
 
 struct WelcomeContext: Encodable {
     var title: String
     var numbers: [Int]
+}
+
+enum RemainderType {
+    case sevenDays, lastDay
 }
