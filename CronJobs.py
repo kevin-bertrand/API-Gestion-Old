@@ -36,7 +36,7 @@ def UpdateDocument(table, status, reference, limit):
         cur.execute(sql)
 
 # Select all invoices
-def SelectInvoices():
+def SelectInvoices(header):
     sql = "SELECT * FROM invoice WHERE (status='sent' OR status='overdue');"
     cur.execute(sql)
     invoices = cur.fetchall()
@@ -48,14 +48,14 @@ def SelectInvoices():
         sevenDay = limitDate - timedelta(days=7)
 
         if today == limitDate:
-            response = requests.patch(("http://gestion.desyntic.com:2574/invoice/last/%s" % (invoiceId)))
+            response = requests.patch(("http://gestion.desyntic.com:2574/invoice/last/%s" % (invoiceId)), headers=header)
         elif today == sevenDay:
-            response = requests.patch(("http://gestion.desyntic.com:2574/invoice/remainder/%s" % (invoiceId)))
+            response = requests.patch(("http://gestion.desyntic.com:2574/invoice/remainder/%s" % (invoiceId)), headers=header)
         elif today > limitDate:
-            response = requests.patch(("http://gestion.desyntic.com:2574/invoice/delays/%s" % (invoiceId)))
+            response = requests.patch(("http://gestion.desyntic.com:2574/invoice/delays/%s" % (invoiceId)), headers=header)
 
 # Select all estimates
-def SelectEstimates():
+def SelectEstimates(header):
     sql = "SELECT * FROM estimate WHERE status='sent';"
     cur.execute(sql)
     estimates = cur.fetchall()
@@ -67,9 +67,9 @@ def SelectEstimates():
 ###############################################
 ## Main
 ###############################################
-token = response.post("http://gestion.desyntic.com:2574/staff/login", auth=(USERNAME, PASSWORD)).json()["token"]
-print(token)
-# SelectInvoices()
-# SelectEstimates()
-# conn.commit()
-# conn.close()
+token = requests.post("http://gestion.desyntic.com:2574/staff/login", auth=(USERNAME, PASSWORD)).json()["token"]
+header = {'Authorization': 'Bearer ' + token}
+SelectInvoices(header)
+SelectEstimates(header)
+conn.commit()
+conn.close()

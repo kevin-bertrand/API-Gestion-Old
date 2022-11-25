@@ -15,9 +15,6 @@ struct InvoiceController: RouteCollection {
     // MARK: Route initialisation
     func boot(routes: RoutesBuilder) throws {
         let invoiceGroup = routes.grouped("invoice")
-        invoiceGroup.patch("delays", ":id", use: checkDelays)
-        invoiceGroup.patch("remainder", ":id", use: sendRemainder)
-        invoiceGroup.patch("last", ":id", use: sendLastDayRemainder)
         
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
@@ -28,6 +25,9 @@ struct InvoiceController: RouteCollection {
         tokenGroup.get("filter", ":filter", use: getList)
         tokenGroup.get(":id", use: getInvoice)
         tokenGroup.get("pdf", ":reference", use: pdf)
+        tokenGroup.patch("delays", ":id", use: checkDelays)
+        tokenGroup.patch("remainder", ":id", use: sendRemainder)
+        tokenGroup.patch("last", ":id", use: sendLastDayRemainder)
     }
     
     // MARK: Routes functions    
