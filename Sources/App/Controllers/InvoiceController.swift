@@ -602,8 +602,8 @@ struct InvoiceController: RouteCollection {
             interestMessage = "Nous vous rappelons qu'un accord vous octroyant un plafond de <strong>\(maxInterests.twoDigitPrecision) €</strong> d'intérêt est toujours valable. Celui-ci le restera jusqu'au <strong>\(maxLimitInterests.dateOnly)</strong>. Dès le lendemain de cette date, les intérêts seront recalculés en fonction des conditions générales en prenant comme nombre de jours de retard, la date limite de payement inscrite sur la facture."
         } else {
             interestMessage = """
-                            Calcul des intétêts:
-                            Note: ((total TTC * 3 * taux légal * nombre de jours de retard)/36500) + frais de recouvrement = intérêts
+                            Calcul des intétêts:<br/>
+                            ((total TTC * 3 * taux légal * nombre de jours de retard)/365) + frais de recouvrement = intérêts<br/>
                             ((\(invoice.total.twoDigitPrecision) * 3 * 0,0077 * \(invoice.delayDays)) / 365) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
                             """
         }
