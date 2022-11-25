@@ -619,7 +619,8 @@ struct InvoiceController: RouteCollection {
                     Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com.<br/>
                     """
         
-        try await GlobalFunctions.shared.sendEmail(toName: name,
+        try await GlobalFunctions.shared.sendEmail(for: invoice.id,
+                                                   toName: name,
                                                    email: client.email,
                                                    withTitle: "[Retard] Règlement de votre facture \(invoice.reference)",
                                                    andMessage: message,
@@ -651,7 +652,8 @@ struct InvoiceController: RouteCollection {
                     Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com.
                     """
         
-        try await GlobalFunctions.shared.sendEmail(toName: name,
+        try await GlobalFunctions.shared.sendEmail(for: invoice.id,
+                                                   toName: name,
                                                    email: client.email,
                                                    withTitle: "[Rappel] Règlement de votre facture \(invoice.reference)",
                                                    andMessage: message,

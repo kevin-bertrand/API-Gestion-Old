@@ -25,9 +25,25 @@ class GlobalFunctions {
     }
     
     /// Sending emails
-    func sendEmail(toName clientName: String, email: String, withTitle title: String, andMessage message: String, on request: Request) async throws {
-        guard let apiKey = Environment.get("MAIL_KEY") else { return }
+    func sendEmail(for id: UUID?,
+                   toName clientName: String,
+                   email: String,
+                   withTitle title: String,
+                   andMessage message: String,
+                   on request: Request) async throws {
+
+        let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
+        let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
         
+        guard let invoice = try await Invoice.find(id, on: request.db),
+              let apiKey = Environment.get("MAIL_KEY") else { throw Abort(.notFound) }
+        
+        let invoicePDF = try await request.client.get("http://\(serverIP):\(serverPort)/invoice/pdf/\(invoice.reference)", headers: request.headers)
+        
+        guard var pdf = invoicePDF.body, let pdfData = pdf.readData(length: pdf.readableBytes) else {
+            throw Abort(.internalServerError)
+        }
+                
         let page = request.view.render("remainder", ["message": message, "name": clientName])
         guard let mail = try [page]
             .flatten(on: request.eventLoop)
@@ -41,7 +57,8 @@ class GlobalFunctions {
                                    to: [PersonEmailInfo(name: clientName, email: email)],
                                    bcc: [PersonEmailInfo(name: "Desyntic", email: "contact@desyntic.com")],
                                    subject: title,
-                                   htmlContent: String(decoding: mail, as: UTF8.self))
+                                   htmlContent: String(decoding: mail, as: UTF8.self),
+                                   attachment: [.init(name: "\(invoice.reference).pdf", content: String(decoding: pdfData, as: UTF8.self))])
 
         let headers: HTTPHeaders = [
             "api-key": apiKey,
@@ -61,9 +78,15 @@ struct EmailFormatting: Codable, Content {
     let bcc: [PersonEmailInfo]
     let subject: String
     let htmlContent: String
+    let attachment: [AttachementFiles]
 }
 
 struct PersonEmailInfo: Codable {
     let name: String
     let email: String
+}
+
+struct AttachementFiles: Codable {
+    let name: String
+    let content: String
 }
