@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import Mailgun
 import Vapor
 
 struct InvoiceController: RouteCollection {
@@ -31,7 +30,7 @@ struct InvoiceController: RouteCollection {
         tokenGroup.get("pdf", ":reference", use: pdf)
     }
     
-    // MARK: Routes functions
+    // MARK: Routes functions    
     /// Getting new invoice reference
     private func getInvoiceReference(req: Request) async throws -> Response {
         let invoices = try await Invoice.query(on: req.db).sort(\.$reference).all()
@@ -624,15 +623,10 @@ struct InvoiceController: RouteCollection {
                     Ceci est un message automatique, merci de ne pas y répondre.
                     """
         
-        let mail = MailgunMessage(from:  Environment.get("MAILGUN_FROM_EMAIL") ?? "no-reply",
-                                  to: client.email,
-                                  cc: "contact@desyntic.com",
-                                  subject: "[Retard] Règlement de votre facture \(invoice.reference)",
-                                  text: message)
-        
-        _ = req.mailgun().send(mail).map({ _ in
-            return true
-        })
+        try await GlobalFunctions.shared.sendEmail(to: client.email,
+                                             withTitle: "[Retard] Règlement de votre facture \(invoice.reference)",
+                                             andMessage: message,
+                                             on: req)
     }
     
     /// Send remainder email
@@ -664,7 +658,7 @@ struct InvoiceController: RouteCollection {
                     Ceci est un message automatique, merci de ne pas y répondre.
                     """
         
-        try GlobalFunctions.shared.sendEmail(to: client.email,
+        try await GlobalFunctions.shared.sendEmail(to: client.email,
                                              withTitle: "[Rappel] Règlement de votre facture \(invoice.reference)",
                                              andMessage: message,
                                              on: req)

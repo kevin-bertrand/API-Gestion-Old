@@ -25,7 +25,7 @@ class GlobalFunctions {
     }
     
     /// Sending emails
-    func sendEmail(to client: String, withTitle title: String, andMessage message: String, on request: Request) throws {
+    func sendEmail(to client: String, withTitle title: String, andMessage message: String, on request: Request) async throws {
         guard let apiKey = Environment.get("MAIL_KEY") else { return }
         
         let data = EmailFormatting(sender: PersonEmailInfo(name: "Desyntic", email: "no-reply@desyntic.com"),
@@ -33,12 +33,16 @@ class GlobalFunctions {
                                    bcc: [PersonEmailInfo(name: "Desyntic", email: "contact@desyntic.com")],
                                    subject: title,
                                    htmlContent: message)
+        print(data)
         let headers: HTTPHeaders = [
             "api-key": apiKey,
             "accept": "application/json",
             "content-type": "application/json"
         ]
-        _ = request.client.patch(URI(stringLiteral: "https://api.sendinblue.com/v3/smtp/email"), headers: headers,  content: data)
+        
+        _ = try await request.client.post("https://api.sendinblue.com/v3/smtp/email", headers: headers) { req in
+            try req.content.encode(data)
+        }
     }
 }
 
