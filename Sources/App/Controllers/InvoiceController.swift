@@ -435,11 +435,11 @@ struct InvoiceController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        if invoice.status == .sent || invoice.status == .overdue {
-            let limitDate = Calendar.current.date(byAdding: .day, value: 7, to: invoice.limitPayementDate)
+        if invoice.status == .sent {
+            let limitDate = Calendar.current.date(byAdding: .day, value: -7, to: invoice.limitPayementDate)
             let today = Date()
             
-            if limitDate == today {
+            if limitDate?.dateOnly == today.dateOnly {
                 try await sendRemainderEmail(for: invoiceId, on: req, withRemainder: .sevenDays)
             }
         }
@@ -455,11 +455,11 @@ struct InvoiceController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        if invoice.status == .sent || invoice.status == .overdue {
+        if invoice.status == .sent {
             let limitDate = invoice.limitPayementDate
             let today = Date()
             
-            if limitDate == today {
+            if limitDate.dateOnly == today.dateOnly {
                 try await sendRemainderEmail(for: invoiceId, on: req, withRemainder: .lastDay)
             }
         }
