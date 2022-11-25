@@ -25,14 +25,23 @@ class GlobalFunctions {
     }
     
     /// Sending emails
-    func sendEmail(to client: String, withTitle title: String, andMessage message: String, on request: Request) async throws {
+    func sendEmail(toName clientName: String, email: String, withTitle title: String, andMessage message: String, on request: Request) async throws {
         guard let apiKey = Environment.get("MAIL_KEY") else { return }
         
+        let page = request.view.render("remainder", ["message": message, "name": clientName])
+        guard let mail = try [page]
+            .flatten(on: request.eventLoop)
+            .map({ views in
+                views.map { view in
+                    Page(view.data)
+                }
+            }).wait().first?.content else { return }
+        
         let data = EmailFormatting(sender: PersonEmailInfo(name: "Desyntic", email: "no-reply@desyntic.com"),
-                                   to: [PersonEmailInfo(name: client, email: client)],
+                                   to: [PersonEmailInfo(name: clientName, email: email)],
                                    bcc: [PersonEmailInfo(name: "Desyntic", email: "contact@desyntic.com")],
                                    subject: title,
-                                   htmlContent: message)
+                                   htmlContent: String(decoding: mail, as: UTF8.self))
         print(data)
         let headers: HTTPHeaders = [
             "api-key": apiKey,

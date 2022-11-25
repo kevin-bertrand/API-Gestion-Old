@@ -609,24 +609,23 @@ struct InvoiceController: RouteCollection {
         }
         
         let message = """
-                    \(name),
-                    
-                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.
-                    La date d'échéance étant le \(invoice.limitPayementDate.dateOnly), vous êtes dorénavant en retard de payement. De ce fait, vous devez regler, en plus du montant de votre facture, des intérêts qui s'élèvent à ce jour à \(invoice.totalDelay.twoDigitPrecision) €.
-                    
-                    \(interestMessage)
-                    
-                    Le montant total à payer à ce jour est de: \(invoice.grandTotal.twoDigitPrecision) €
-                    
-                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com
-                    -------------------------------------------------------------------------------------------------
+                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.<br/>
+                    La date d'échéance étant le \(invoice.limitPayementDate.dateOnly), vous êtes dorénavant en retard de payement. De ce fait, vous devez regler, en plus du montant de votre facture, des intérêts qui s'élèvent à ce jour à \(invoice.totalDelay.twoDigitPrecision) €.<br/>
+                    <br/>
+                    \(interestMessage)<br/>
+                    <br/>
+                    Le montant total à payer à ce jour est de: \(invoice.grandTotal.twoDigitPrecision) €.<br/>
+                    <br/>
+                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com.<br/>
+                    <hr/>
                     Ceci est un message automatique, merci de ne pas y répondre.
                     """
         
-        try await GlobalFunctions.shared.sendEmail(to: client.email,
-                                             withTitle: "[Retard] Règlement de votre facture \(invoice.reference)",
-                                             andMessage: message,
-                                             on: req)
+        try await GlobalFunctions.shared.sendEmail(toName: name,
+                                                   email: client.email,
+                                                   withTitle: "[Retard] Règlement de votre facture \(invoice.reference)",
+                                                   andMessage: message,
+                                                   on: req)
     }
     
     /// Send remainder email
@@ -648,20 +647,19 @@ struct InvoiceController: RouteCollection {
         }
         
         let message = """
-                    \(name),
-                    
-                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.
-                    \(remainderMessage)
-                    
-                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com
-                    -------------------------------------------------------------------------------------------------
+                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.<br/>
+                    \(remainderMessage)<br/>
+                    <br/>
+                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com<br/>
+                    <hr/>
                     Ceci est un message automatique, merci de ne pas y répondre.
                     """
         
-        try await GlobalFunctions.shared.sendEmail(to: client.email,
-                                             withTitle: "[Rappel] Règlement de votre facture \(invoice.reference)",
-                                             andMessage: message,
-                                             on: req)
+        try await GlobalFunctions.shared.sendEmail(toName: name,
+                                                   email: client.email,
+                                                   withTitle: "[Rappel] Règlement de votre facture \(invoice.reference)",
+                                                   andMessage: message,
+                                                   on: req)
     }
     
     /// Getting name for email
@@ -686,11 +684,6 @@ struct InvoiceController: RouteCollection {
         
         return name
     }
-}
-
-struct WelcomeContext: Encodable {
-    var title: String
-    var numbers: [Int]
 }
 
 enum RemainderType {
