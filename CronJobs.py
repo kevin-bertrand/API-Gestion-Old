@@ -15,6 +15,8 @@ DATABASE_PORT = config('DATABASE_PORT')
 DATABASE_USERNAME = config('DATABASE_USERNAME')
 DATABASE_PASSWORD = config('DATABASE_PASSWORD')
 DATABASE_NAME = config('DATABASE_NAME')
+USERNAME = config('ADMINISTRATOR_EMAIL')
+PASSWORD = config('ADMINISTRATOR_PASSWORD')
 
 ###############################################
 ## Configure DB
@@ -65,7 +67,9 @@ def SelectEstimates():
 ###############################################
 ## Main
 ###############################################
-SelectInvoices()
-SelectEstimates()
-conn.commit()
-conn.close()
+token = response.post("http://gestion.desyntic.com:2574/staff/login", auth=(USERNAME, PASSWORD))
+print(token.text)
+# SelectInvoices()
+# SelectEstimates()
+# conn.commit()
+# conn.close()
