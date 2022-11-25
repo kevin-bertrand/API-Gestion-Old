@@ -665,8 +665,9 @@ struct InvoiceController: RouteCollection {
                     """
         
         try GlobalFunctions.shared.sendEmail(to: client.email,
-                                         withTitle: "[Rappel] Règlement de votre facture \(invoice.reference)",
-                                         andMessage: message)
+                                             withTitle: "[Rappel] Règlement de votre facture \(invoice.reference)",
+                                             andMessage: message,
+                                             on: req)
     }
     
     /// Getting name for email

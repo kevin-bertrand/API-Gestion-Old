@@ -25,26 +25,24 @@ class GlobalFunctions {
     }
     
     /// Sending emails
-    func sendEmail(to client: String, withTitle title: String, andMessage message: String) throws {
-        guard let url = URL(string: "https://api.sendinblue.com/v3/smtp/email"), let apiKey = Environment.get("MAIL_KEY") else { return }
+    func sendEmail(to client: String, withTitle title: String, andMessage message: String, on request: Request) throws {
+        guard let apiKey = Environment.get("MAIL_KEY") else { return }
         
         let data = EmailFormatting(sender: PersonEmailInfo(name: "Desyntic", email: "no-reply@desyntic.com"),
                                    to: [PersonEmailInfo(name: client, email: client)],
                                    bcc: [PersonEmailInfo(name: "Desyntic", email: "contact@desyntic.com")],
                                    subject: title,
                                    htmlContent: message)
-        
-        var request = URLRequest(url: url)
-        request.addValue(apiKey, forHTTPHeaderField: "api-key")
-        request.addValue("application/json", forHTTPHeaderField: "accept")
-        request.addValue("application/json", forHTTPHeaderField: "content-type")
-        request.httpBody = try JSONEncoder().encode(data)
-        
-        URLSession.shared.dataTask(with: request) { (_, _, _) in }.resume()
+        let headers: HTTPHeaders = [
+            "api-key": apiKey,
+            "accept": "application/json",
+            "content-type": "application/json"
+        ]
+        _ = request.client.patch(URI(stringLiteral: "https://api.sendinblue.com/v3/smtp/email"), headers: headers,  content: data)
     }
 }
 
-struct EmailFormatting: Codable {
+struct EmailFormatting: Codable, Content {
     let sender: PersonEmailInfo
     let to: [PersonEmailInfo]
     let bcc: [PersonEmailInfo]
