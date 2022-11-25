@@ -647,10 +647,10 @@ struct InvoiceController: RouteCollection {
         }
         
         let message = """
-                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.<br/>
-                    \(remainderMessage)<br/>
-                    <br/>
-                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com<br/>
+                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.\n
+                    \(remainderMessage)\n
+                    \n
+                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com\n
                     <hr/>
                     Ceci est un message automatique, merci de ne pas y répondre.
                     """

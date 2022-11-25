@@ -42,7 +42,7 @@ class GlobalFunctions {
                                    bcc: [PersonEmailInfo(name: "Desyntic", email: "contact@desyntic.com")],
                                    subject: title,
                                    htmlContent: String(decoding: mail, as: UTF8.self))
-        print(data)
+
         let headers: HTTPHeaders = [
             "api-key": apiKey,
             "accept": "application/json",
