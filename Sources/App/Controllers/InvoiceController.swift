@@ -646,9 +646,9 @@ struct InvoiceController: RouteCollection {
         
         let message = """
                     Sauf temps de traitement des banques, vous avez une facture non réglée (<strong>\(invoice.reference)</strong>) d'un montant de <strong>\(invoice.total.twoDigitPrecision) €</strong>.<br>
-                    \(remainderMessage). <br>
+                    \(remainderMessage) <br>
                     <br>
-                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com
+                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com.
                     """
         
         try await GlobalFunctions.shared.sendEmail(toName: name,

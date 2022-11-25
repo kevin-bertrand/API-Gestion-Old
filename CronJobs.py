@@ -5,7 +5,7 @@
 import psycopg2
 import requests
 from decouple import config
-from datetime import date
+from datetime import date, datetime, timedelta
 
 ###############################################
 ## Getting environment variables

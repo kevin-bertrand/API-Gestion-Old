@@ -24,9 +24,9 @@
             </div>
         </div>
 
-        <h3>#(name),</h3>
+        <h3>#unsafeHTML(name),</h3>
         <p style="margin: 25px 0;">
-            #(message)
+            #unsafeHTML(message)
         </p>
         <hr>
         <p class="blockquote-footer" style="margin-top: 25px;"><em>Ceci est un message automatique, merci de ne pas y répondre.</em></p>
