@@ -599,7 +599,7 @@ struct InvoiceController: RouteCollection {
            let maxLimitInterests = invoice.limitMaxInterests,
            maxInterests > 0,
            maxLimitInterests >= Date() {
-            interestMessage = "Nous vous rappelons qu'un accord vous octroyant un plafond de \(maxInterests.twoDigitPrecision) € d'intérêt est toujours valable. Celui-ci le restera jusqu'au \(maxLimitInterests.dateOnly). Dès le lendemain de cette date, les intérêts seront recalculés en fonction des conditions générales en prenant comme nombre de jours de retard, la date limite de payement inscrite sur la facture."
+            interestMessage = "Nous vous rappelons qu'un accord vous octroyant un plafond de <strong>\(maxInterests.twoDigitPrecision) €</strong> d'intérêt est toujours valable. Celui-ci le restera jusqu'au <strong>\(maxLimitInterests.dateOnly)</strong>. Dès le lendemain de cette date, les intérêts seront recalculés en fonction des conditions générales en prenant comme nombre de jours de retard, la date limite de payement inscrite sur la facture."
         } else {
             interestMessage = """
                             Calcul des intétêts:
@@ -609,12 +609,12 @@ struct InvoiceController: RouteCollection {
         }
         
         let message = """
-                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.<br/>
-                    La date d'échéance étant le \(invoice.limitPayementDate.dateOnly), vous êtes dorénavant en retard de payement. De ce fait, vous devez regler, en plus du montant de votre facture, des intérêts qui s'élèvent à ce jour à \(invoice.totalDelay.twoDigitPrecision) €.<br/>
+                    Sauf temps de traitement des banques, vous avez une facture non réglée (<strong>\(invoice.reference)</strong>) d'un montant de <strong>\(invoice.total.twoDigitPrecision) € </strong>.<br/>
+                    La date d'échéance étant le <strong>\(invoice.limitPayementDate.dateOnly)</strong>, vous êtes dorénavant en retard de payement. De ce fait, vous devez regler, en plus du montant de votre facture, des intérêts qui s'élèvent à ce jour à <strong>\(invoice.totalDelay.twoDigitPrecision) €</strong>.<br/>
                     <br/>
                     \(interestMessage)<br/>
                     <br/>
-                    Le montant total à payer à ce jour est de: \(invoice.grandTotal.twoDigitPrecision) €.<br/>
+                    Le montant total à payer à ce jour est de: <strong>\(invoice.grandTotal.twoDigitPrecision) €</strong>.<br/>
                     <br/>
                     Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com.<br/>
                     """
