@@ -441,7 +441,7 @@ struct InvoiceController: RouteCollection {
             let today = Date()
             
             if limitDate == today {
-                try await sendDelayEmail(for: invoiceId, on: req)
+                try await sendRemainderEmail(for: invoiceId, on: req, withRemainder: .sevenDays)
             }
         }
         
@@ -454,6 +454,15 @@ struct InvoiceController: RouteCollection {
         guard let invoiceId = invoiceId,
               let invoice = try await Invoice.find(invoiceId, on: req.db) else {
             throw Abort(.notFound)
+        }
+        
+        if invoice.status == .sent || invoice.status == .overdue {
+            let limitDate = invoice.limitPayementDate
+            let today = Date()
+            
+            if limitDate == today {
+                try await sendRemainderEmail(for: invoiceId, on: req, withRemainder: .lastDay)
+            }
         }
         
         return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
