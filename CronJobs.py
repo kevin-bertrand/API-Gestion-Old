@@ -41,8 +41,16 @@ def SelectInvoices():
 
     for invoice in invoices:
         today = date.today()
-        if today > invoice[12]:
-            response = requests.patch(("http://gestion.desyntic.com:2574/invoice/delays/%s" % (invoice[0])))
+        limitDate = invoice[11]
+        invoiceId = invoice[0]
+        sevenDay = limitDate - timedelta(days=7)
+
+        if today == limitDate:
+            response = requests.patch(("http://gestion.desyntic.com:2574/invoice/last/%s" % (invoiceId)))
+        elif today == sevenDay:
+            response = requests.patch(("http://gestion.desyntic.com:2574/invoice/remainder/%s" % (invoiceId)))
+        elif today > limitDate:
+            response = requests.patch(("http://gestion.desyntic.com:2574/invoice/delays/%s" % (invoiceId)))
 
 # Select all estimates
 def SelectEstimates():

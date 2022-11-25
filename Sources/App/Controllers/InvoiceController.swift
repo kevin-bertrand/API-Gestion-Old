@@ -617,8 +617,6 @@ struct InvoiceController: RouteCollection {
                     Le montant total à payer à ce jour est de: \(invoice.grandTotal.twoDigitPrecision) €.<br/>
                     <br/>
                     Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com.<br/>
-                    <hr/>
-                    Ceci est un message automatique, merci de ne pas y répondre.
                     """
         
         try await GlobalFunctions.shared.sendEmail(toName: name,
@@ -641,18 +639,16 @@ struct InvoiceController: RouteCollection {
         
         switch type {
         case .lastDay:
-            remainderMessage = "Pour rappel, vous avez jusqu'à aujourd'hui pour réglé votre facture. A compté de demain, vous serez redevables d'intérêts."
+            remainderMessage = "Pour rappel, vous avez jusqu'à <strong>aujourd'hui</strong> pour réglé votre facture. A compté de demain, vous serez redevables d'intérêts."
         case .sevenDays:
-            remainderMessage = "Pour rappel, vous avez jusqu'au \(invoice.limitPayementDate.dateOnly) pour régler votre facture."
+            remainderMessage = "Pour rappel, vous avez jusqu'au <strong>\(invoice.limitPayementDate.dateOnly)</strong> pour régler votre facture."
         }
         
         let message = """
-                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.\n
-                    \(remainderMessage)\n
-                    \n
-                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com\n
-                    <hr/>
-                    Ceci est un message automatique, merci de ne pas y répondre.
+                    Sauf temps de traitement des banques, vous avez une facture non réglée (<strong>\(invoice.reference)</strong>) d'un montant de <strong>\(invoice.total.twoDigitPrecision) €</strong>.<br>
+                    \(remainderMessage). <br>
+                    <br>
+                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com
                     """
         
         try await GlobalFunctions.shared.sendEmail(toName: name,
