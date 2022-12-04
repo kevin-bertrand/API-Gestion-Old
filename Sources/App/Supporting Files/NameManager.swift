@@ -79,7 +79,7 @@ enum NameManager {
     }
     
     enum PaymentMethod: String {
-        case schema = "payment_method"
+        case schema = "payement_method"
         case title, iban, bic
     }
     

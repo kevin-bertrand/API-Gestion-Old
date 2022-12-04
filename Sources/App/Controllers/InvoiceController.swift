@@ -6,7 +6,6 @@
 //
 
 import Fluent
-import Mailgun
 import Vapor
 
 struct InvoiceController: RouteCollection {
@@ -16,9 +15,6 @@ struct InvoiceController: RouteCollection {
     // MARK: Route initialisation
     func boot(routes: RoutesBuilder) throws {
         let invoiceGroup = routes.grouped("invoice")
-        invoiceGroup.patch("delays", ":id", use: checkDelays)
-        invoiceGroup.patch("remainder", ":id", use: sendRemainder)
-        invoiceGroup.patch("last", ":id", use: sendLastDayRemainder)
         
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
@@ -29,9 +25,12 @@ struct InvoiceController: RouteCollection {
         tokenGroup.get("filter", ":filter", use: getList)
         tokenGroup.get(":id", use: getInvoice)
         tokenGroup.get("pdf", ":reference", use: pdf)
+        tokenGroup.patch("delays", ":id", use: checkDelays)
+        tokenGroup.patch("remainder", ":id", use: sendRemainder)
+        tokenGroup.patch("last", ":id", use: sendLastDayRemainder)
     }
     
-    // MARK: Routes functions
+    // MARK: Routes functions    
     /// Getting new invoice reference
     private func getInvoiceReference(req: Request) async throws -> Response {
         let invoices = try await Invoice.query(on: req.db).sort(\.$reference).all()
@@ -436,12 +435,12 @@ struct InvoiceController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        if invoice.status == .sent || invoice.status == .overdue {
-            let limitDate = Calendar.current.date(byAdding: .day, value: 7, to: invoice.limitPayementDate)
+        if invoice.status == .sent {
+            let limitDate = Calendar.current.date(byAdding: .day, value: -7, to: invoice.limitPayementDate)
             let today = Date()
             
-            if limitDate == today {
-                try await sendDelayEmail(for: invoiceId, on: req)
+            if limitDate?.dateOnly == today.dateOnly {
+                try await sendRemainderEmail(for: invoiceId, on: req, withRemainder: .sevenDays)
             }
         }
         
@@ -454,6 +453,15 @@ struct InvoiceController: RouteCollection {
         guard let invoiceId = invoiceId,
               let invoice = try await Invoice.find(invoiceId, on: req.db) else {
             throw Abort(.notFound)
+        }
+        
+        if invoice.status == .sent {
+            let limitDate = invoice.limitPayementDate
+            let today = Date()
+            
+            if limitDate.dateOnly == today.dateOnly {
+                try await sendRemainderEmail(for: invoiceId, on: req, withRemainder: .lastDay)
+            }
         }
         
         return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
@@ -591,39 +599,32 @@ struct InvoiceController: RouteCollection {
            let maxLimitInterests = invoice.limitMaxInterests,
            maxInterests > 0,
            maxLimitInterests >= Date() {
-            interestMessage = "Nous vous rappelons qu'un accord vous octroyant un plafond de \(maxInterests.twoDigitPrecision) € d'intérêt est toujours valable. Celui-ci le restera jusqu'au \(maxLimitInterests.dateOnly). Dès le lendemain de cette date, les intérêts seront recalculés en fonction des conditions générales en prenant comme nombre de jours de retard, la date limite de payement inscrite sur la facture."
+            interestMessage = "Nous vous rappelons qu'un accord vous octroyant un plafond de <strong>\(maxInterests.twoDigitPrecision) €</strong> d'intérêt est toujours valable. Celui-ci le restera jusqu'au <strong>\(maxLimitInterests.dateOnly)</strong>. Dès le lendemain de cette date, les intérêts seront recalculés en fonction des conditions générales en prenant comme nombre de jours de retard, la date limite de payement inscrite sur la facture."
         } else {
             interestMessage = """
-                            Calcul des intétêts:
-                            Note: ((total TTC * 3 * taux légal * nombre de jours de retard)/36500) + frais de recouvrement = intérêts
+                            Calcul des intétêts:<br/>
+                            ((total TTC * 3 * taux légal * nombre de jours de retard)/365) + frais de recouvrement = intérêts<br/>
                             ((\(invoice.total.twoDigitPrecision) * 3 * 0,0077 * \(invoice.delayDays)) / 365) + 40 = \(invoice.totalDelay.twoDigitPrecision) €
                             """
         }
         
         let message = """
-                    \(name),
-                    
-                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.
-                    La date d'échéance étant le \(invoice.limitPayementDate.dateOnly), vous êtes dorénavant en retard de payement. De ce fait, vous devez regler, en plus du montant de votre facture, des intérêts qui s'élèvent à ce jour à \(invoice.totalDelay.twoDigitPrecision) €.
-                    
-                    \(interestMessage)
-                    
-                    Le montant total à payer à ce jour est de: \(invoice.grandTotal.twoDigitPrecision) €
-                    
-                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com
-                    -------------------------------------------------------------------------------------------------
-                    Ceci est un message automatique, merci de ne pas y répondre.
+                    Sauf temps de traitement des banques, vous avez une facture non réglée (<strong>\(invoice.reference)</strong>) d'un montant de <strong>\(invoice.total.twoDigitPrecision) € </strong>.<br/>
+                    La date d'échéance étant le <strong>\(invoice.limitPayementDate.dateOnly)</strong>, vous êtes dorénavant en retard de payement. De ce fait, vous devez regler, en plus du montant de votre facture, des intérêts qui s'élèvent à ce jour à <strong>\(invoice.totalDelay.twoDigitPrecision) €</strong>.<br/>
+                    <br/>
+                    \(interestMessage)<br/>
+                    <br/>
+                    Le montant total à payer à ce jour est de: <strong>\(invoice.grandTotal.twoDigitPrecision) €</strong>.<br/>
+                    <br/>
+                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com.<br/>
                     """
         
-        let mail = MailgunMessage(from:  Environment.get("MAILGUN_FROM_EMAIL") ?? "no-reply",
-                                  to: client.email,
-                                  cc: "contact@desyntic.com",
-                                  subject: "[Retard] Règlement de votre facture \(invoice.reference)",
-                                  text: message)
-        
-        _ = req.mailgun().send(mail).map({ _ in
-            return true
-        })
+        try await GlobalFunctions.shared.sendEmail(for: invoice.id,
+                                                   toName: name,
+                                                   email: client.email,
+                                                   withTitle: "[Retard] Règlement de votre facture \(invoice.reference)",
+                                                   andMessage: message,
+                                                   on: req)
     }
     
     /// Send remainder email
@@ -639,31 +640,24 @@ struct InvoiceController: RouteCollection {
         
         switch type {
         case .lastDay:
-            remainderMessage = "Pour rappel, vous avez jusqu'à aujourd'hui pour réglé votre facture. A compté de demain, vous serez redevables d'intérêts."
+            remainderMessage = "Pour rappel, vous avez jusqu'à <strong>aujourd'hui</strong> pour réglé votre facture. A compté de demain, vous serez redevables d'intérêts."
         case .sevenDays:
-            remainderMessage = "Pour rappel, vous avez jusqu'au \(invoice.limitPayementDate.dateOnly) pour régler votre facture."
+            remainderMessage = "Pour rappel, vous avez jusqu'au <strong>\(invoice.limitPayementDate.dateOnly)</strong> pour régler votre facture."
         }
         
         let message = """
-                    \(name),
-                    
-                    Sauf temps de traitement des banques, vous avez une facture non réglée (\(invoice.reference)) d'un montant de \(invoice.total.twoDigitPrecision) €.
-                    \(remainderMessage)
-                    
-                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com
-                    -------------------------------------------------------------------------------------------------
-                    Ceci est un message automatique, merci de ne pas y répondre.
+                    Sauf temps de traitement des banques, vous avez une facture non réglée (<strong>\(invoice.reference)</strong>) d'un montant de <strong>\(invoice.total.twoDigitPrecision) €</strong>.<br>
+                    \(remainderMessage) <br>
+                    <br>
+                    Si le payement a déjà été effectué, merci d'envoyer une preuve de payement à contact@desyntic.com.
                     """
         
-        let mail = MailgunMessage(from:  Environment.get("MAILGUN_FROM_EMAIL") ?? "no-reply",
-                                  to: client.email,
-                                  cc: "contact@desyntic.com",
-                                  subject: "[Rappel] Règlement de votre facture \(invoice.reference)",
-                                  text: message)
-        
-        _ = req.mailgun().send(mail).map({ _ in
-            return true
-        })
+        try await GlobalFunctions.shared.sendEmail(for: invoice.id,
+                                                   toName: name,
+                                                   email: client.email,
+                                                   withTitle: "[Rappel] Règlement de votre facture \(invoice.reference)",
+                                                   andMessage: message,
+                                                   on: req)
     }
     
     /// Getting name for email
@@ -688,11 +682,6 @@ struct InvoiceController: RouteCollection {
         
         return name
     }
-}
-
-struct WelcomeContext: Encodable {
-    var title: String
-    var numbers: [Int]
 }
 
 enum RemainderType {
