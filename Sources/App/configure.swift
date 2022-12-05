@@ -1,6 +1,8 @@
+import APNS
 import Fluent
 import FluentPostgresDriver
 import FluentSQLiteDriver
+import JWTKit
 import Leaf
 import Vapor
 
@@ -28,6 +30,12 @@ public func configure(_ app: Application) throws {
     // Leaf configuration
     app.views.use(.leaf)
     
+    // APNS Configuration
+    app.apns.configuration = try .init(authenticationMethod: .jwt(key: .private(filePath: Environment.get("APNS_FILE_PATH") ?? ""),
+                                                                  keyIdentifier: JWKIdentifier(string: Environment.get("APNS_KEY_IDENTIFIER") ?? ""),
+                                                                  teamIdentifier: Environment.get("APNS_TEAM_IDENTIFIER") ?? ""),
+                                       topic: "com.destyntic.gestion",
+                                       environment: .production)
     // Server configuration
     app.http.server.configuration.hostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
     app.http.server.configuration.port = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
@@ -45,6 +53,7 @@ public func configure(_ app: Application) throws {
     app.migrations.add(UserTokenMigration())
     app.migrations.add(YearRevenueMigration())
     app.migrations.add(InternalReferenceMigration())
+    app.migrations.add(DeviceMigration())
     app.migrations.add(SiblingsMigration())
     
     // Add default administrator user

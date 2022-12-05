@@ -125,4 +125,10 @@ enum NameManager {
         case grandTotal = "grand_total"
         case year
     }
+    
+    enum Device: String {
+        case schema = "device"
+        case deviceId = "device_id"
+        case staffId = "staff_id"
+    }
 }
