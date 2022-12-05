@@ -35,7 +35,7 @@ public func configure(_ app: Application) throws {
                                                                   keyIdentifier: JWKIdentifier(string: Environment.get("APNS_KEY_IDENTIFIER") ?? ""),
                                                                   teamIdentifier: Environment.get("APNS_TEAM_IDENTIFIER") ?? ""),
                                        topic: "com.destyntic.ios.gestion",
-                                       environment: .production)
+                                       environment: .sandbox)
     // Server configuration
     app.http.server.configuration.hostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
     app.http.server.configuration.port = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
