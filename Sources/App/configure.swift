@@ -34,7 +34,7 @@ public func configure(_ app: Application) throws {
     app.apns.configuration = try .init(authenticationMethod: .jwt(key: .private(filePath: Environment.get("APNS_FILE_PATH") ?? ""),
                                                                   keyIdentifier: JWKIdentifier(string: Environment.get("APNS_KEY_IDENTIFIER") ?? ""),
                                                                   teamIdentifier: Environment.get("APNS_TEAM_IDENTIFIER") ?? ""),
-                                       topic: "com.desyntic.ios.gestion",
+                                       topic: "com.desyntic.ios.Gestion",
                                        environment: .sandbox)
     // Server configuration
     app.http.server.configuration.hostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
