@@ -9,6 +9,6 @@ import Foundation
 
 extension Device {
     struct Login: Codable {
-        let token: String
+        let token: String?
     }
 }
