@@ -496,6 +496,8 @@ struct InvoiceController: RouteCollection {
                     interests = maxInterest
                 }
                 
+                print("delay: \(delay)")
+                
                 switch delay {
                 case 1:
                     try await sendNotification(message: "The invoice \(invoice.reference) is now unpaid!", req: req, invoiceReference: invoice.reference)
