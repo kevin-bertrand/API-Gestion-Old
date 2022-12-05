@@ -67,7 +67,7 @@ def SelectEstimates(header):
 ###############################################
 ## Main
 ###############################################
-token = requests.post("http://gestion.desyntic.com:2574/staff/login", auth=(USERNAME, PASSWORD)).json()["token"]
+token = requests.post("http://gestion.desyntic.com:2574/staff/login", auth=(USERNAME, PASSWORD), json={"token": None}).json()["token"]
 header = {'Authorization': 'Bearer ' + token}
 SelectInvoices(header)
 SelectEstimates(header)
