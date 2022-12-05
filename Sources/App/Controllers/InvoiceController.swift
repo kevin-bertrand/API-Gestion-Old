@@ -535,18 +535,20 @@ struct InvoiceController: RouteCollection {
             .filter(\.$position == .leadingBoard)
             .all()
         
-        var devices = [Device]()
+        var devices = [String]()
         
         for user in staff {
             try await Device.query(on: req.db).filter(\.$staff.$id == user.requireID()).all().forEach({
-                devices.append($0)
+                devices.append($0.deviceId)
             })
         }
         
         let alert = APNSwiftAlert(title: "Invoice Unpaid", subtitle: invoiceReference, body: message)
         
+        print(devices)
+        
         for device in devices {
-            _ = req.apns.send(alert, to: device.deviceId)
+            _ = req.apns.send(alert, to: device)
         }
     }
     
