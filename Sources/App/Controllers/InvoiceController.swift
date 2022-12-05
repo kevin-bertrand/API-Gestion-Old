@@ -5,6 +5,7 @@
 //  Created by Kevin Bertrand on 26/08/2022.
 //
 
+import APNS
 import Fluent
 import Vapor
 
@@ -495,6 +496,21 @@ struct InvoiceController: RouteCollection {
                     interests = maxInterest
                 }
                 
+                switch delay {
+                case 1:
+                    try await sendNotification(message: "The invoice \(invoice.reference) is now unpaid!", req: req, invoiceReference: invoice.reference)
+                case 7:
+                    try await sendNotification(message: "The invoice \(invoice.reference) is now unpaid for 1 week!", req: req, invoiceReference: invoice.reference)
+                case 14:
+                    try await sendNotification(message: "The invoice \(invoice.reference) is now unpaid for 2 week!", req: req, invoiceReference: invoice.reference)
+                case 21:
+                    try await sendNotification(message: "The invoice \(invoice.reference) is now unpaid for 3 week!", req: req, invoiceReference: invoice.reference)
+                case 28:
+                    try await sendNotification(message: "The invoice \(invoice.reference) is now unpaid for 4 week!", req: req, invoiceReference: invoice.reference)
+                default:
+                    break
+                }
+                
                 try await Invoice.query(on: req.db)
                     .set(\.$totalDelay, to: interests)
                     .set(\.$delayDays, to: delay)
@@ -511,6 +527,25 @@ struct InvoiceController: RouteCollection {
     }
     
     // MARK: Utilities functions
+    /// Send notification with message
+    private func sendNotification(message: String, req: Request, invoiceReference: String) async throws {
+        let staff = try await Staff.query(on: req.db)
+            .filter(\.$position == .leadingBoard)
+            .all()
+        
+        var devices = [Device]()
+        
+        for user in staff {
+            devices.append(contentsOf: try await Device.query(on: req.db).filter(\.$staff.$id == user.requireID()).all())
+        }
+        
+        let alert = APNSwiftAlert(title: "Invoice Unpaid", subtitle: invoiceReference, body: message)
+        
+        for device in devices {
+            _ = req.apns.send(alert, to: device.deviceId)
+        }
+    }
+    
     /// Format invoice summary
     private func formatInvoiceSummaray(_ invoices: [Invoice]) -> [Invoice.Summary] {
         var invoiceSummary: [Invoice.Summary] = []

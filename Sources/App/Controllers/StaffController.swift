@@ -34,6 +34,7 @@ struct StaffController: RouteCollection {
     /// Login function
     private func login(req: Request) async throws -> Response {
         let userAuth = try GlobalFunctions.shared.getUserAuthFor(req)
+        let receivedData = try req.content.decode(Device.Login.self)
         
         let token = try await generateToken(for: userAuth, in: req)
         
@@ -49,6 +50,12 @@ struct StaffController: RouteCollection {
                                                 token: token.value,
                                                 permissions: userAuth.permissions,
                                                 address: try await addressController.getAddressFromId(userAuth.$address.id, for: req))
+        
+        // Check if the device doesn't exist
+        if try await Device.query(on: req.db).filter(\.$staff.$id == userAuth.requireID()).filter(\.$deviceId == receivedData.token).first() == nil {
+            let newDevice = Device(deviceId: receivedData.token, staffID: try userAuth.requireID())
+            try await newDevice.save(on: req.db)
+        }
         
         return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(staffInformations)))
     }
