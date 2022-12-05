@@ -52,8 +52,9 @@ struct StaffController: RouteCollection {
                                                 address: try await addressController.getAddressFromId(userAuth.$address.id, for: req))
         
         // Check if the device doesn't exist
-        if try await Device.query(on: req.db).filter(\.$staff.$id == userAuth.requireID()).filter(\.$deviceId == receivedData.token).first() == nil {
-            let newDevice = Device(deviceId: receivedData.token, staffID: try userAuth.requireID())
+        if let token = receivedData.token,
+           try await Device.query(on: req.db).filter(\.$staff.$id == userAuth.requireID()).filter(\.$deviceId == token).first() == nil {
+            let newDevice = Device(deviceId: token, staffID: try userAuth.requireID())
             try await newDevice.save(on: req.db)
         }
         
