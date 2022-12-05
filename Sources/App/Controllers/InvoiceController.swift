@@ -496,8 +496,6 @@ struct InvoiceController: RouteCollection {
                     interests = maxInterest
                 }
                 
-                print("delay: \(delay)")
-                
                 switch delay {
                 case 1:
                     try await sendNotification(message: "The invoice \(invoice.reference) is now unpaid!", req: req, invoiceReference: invoice.reference)
@@ -544,8 +542,6 @@ struct InvoiceController: RouteCollection {
         }
         
         let alert = APNSwiftAlert(title: "Invoice Unpaid", subtitle: invoiceReference, body: message)
-        
-        print(devices)
         
         for device in devices {
             _ = req.apns.send(alert, to: device)
