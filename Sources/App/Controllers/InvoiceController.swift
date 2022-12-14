@@ -16,7 +16,6 @@ struct InvoiceController: RouteCollection {
     // MARK: Route initialisation
     func boot(routes: RoutesBuilder) throws {
         let invoiceGroup = routes.grouped("invoice")
-        invoiceGroup.get("test", use: test)
         
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
@@ -33,24 +32,6 @@ struct InvoiceController: RouteCollection {
     }
     
     // MARK: Routes functions
-    private func test(req: Request) async throws -> Response {
-        var file = ByteBuffer()
-        
-        for retry in 0..<3 {
-            do {
-                file = try await req.fileio.collectFile(at: "/Users/kevinbertrand/Downloads/IMG_9F68E7447945-1.jpeg")
-            } catch {
-                if retry == 2 {
-                    throw Abort(.internalServerError)
-                } else {
-                    try await saveAsPDF(on: req, reference: "")
-                }
-            }
-        }
-        
-        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(buffer: file))
-    }
-    
     /// Getting new invoice reference
     private func getInvoiceReference(req: Request) async throws -> Response {
         let invoices = try await Invoice.query(on: req.db).sort(\.$reference).all()
@@ -327,7 +308,7 @@ struct InvoiceController: RouteCollection {
         
         for _ in 0..<3 {
             do {
-                file = try await req.fileio.collectFile(at: "/home/vapor/Public/\(reference).pdf")
+                file = try await req.fileio.collectFile(at: "/home/vapor/Gestion-server/Public/\(reference).pdf")
                 return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(buffer: file))
             } catch {
                 try await saveAsPDF(on: req, reference: reference)
