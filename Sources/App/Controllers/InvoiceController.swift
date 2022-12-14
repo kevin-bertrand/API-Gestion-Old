@@ -16,6 +16,7 @@ struct InvoiceController: RouteCollection {
     // MARK: Route initialisation
     func boot(routes: RoutesBuilder) throws {
         let invoiceGroup = routes.grouped("invoice")
+        invoiceGroup.get("test", use: test)
         
         let tokenGroup = invoiceGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getInvoiceReference)
@@ -31,7 +32,25 @@ struct InvoiceController: RouteCollection {
         tokenGroup.patch("last", ":id", use: sendLastDayRemainder)
     }
     
-    // MARK: Routes functions    
+    // MARK: Routes functions
+    private func test(req: Request) async throws -> Response {
+        var file = ByteBuffer()
+        
+        for retry in 0..<3 {
+            do {
+                file = try await req.fileio.collectFile(at: "/Users/kevinbertrand/Downloads/IMG_9F68E7447945-1.jpeg")
+            } catch {
+                if retry == 2 {
+                    throw Abort(.internalServerError)
+                } else {
+                    try await saveAsPDF(on: req, reference: "")
+                }
+            }
+        }
+        
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(buffer: file))
+    }
+    
     /// Getting new invoice reference
     private func getInvoiceReference(req: Request) async throws -> Response {
         let invoices = try await Invoice.query(on: req.db).sort(\.$reference).all()
@@ -160,6 +179,8 @@ struct InvoiceController: RouteCollection {
             .set(\.$ref, to: updatedInvoice.internalReference)
             .filter(\.$invoice.$id == updatedInvoice.id)
             .update()
+        
+        try await saveAsPDF(on: req, reference: invoice.reference)
         
         return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
@@ -298,133 +319,152 @@ struct InvoiceController: RouteCollection {
     
     /// Export to PDF
     private func pdf(req: Request) async throws -> Response {
-        let document = Document(margins: 15)
-        
         let reference = req.parameters.get("reference")
-        let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
-        let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
         
-        guard let reference = reference,
-              let invoice = try await Invoice.query(on: req.db).filter(\.$reference == reference).first(),
-              let id = invoice.id,
-              let client = try await Client.find(invoice.$client.id, on: req.db),
-              let internalRef = try await InternalReference.query(on: req.db).filter(\.$invoice.$id == id).first()?.ref else {
-            throw Abort(.notFound)
-        }
+        guard let reference = reference else { throw Abort(.notAcceptable) }
         
-        let productsInvoice = try await ProductInvoice.query(on: req.db).filter(\.$invoice.$id == id).all()
-        var products: [Product.Informations] = []
+        var file = ByteBuffer()
         
-        for productInvoice in productsInvoice {
-            guard let product = try await Product.find(productInvoice.$product.id, on: req.db), let productId = product.id else { throw Abort(.notAcceptable) }
-            products.append(Product.Informations(id: productId,
-                                                 quantity: productInvoice.quantity,
-                                                 reduction: productInvoice.reduction,
-                                                 title: product.title,
-                                                 unity: product.unity,
-                                                 domain: product.domain,
-                                                 productCategory: product.productCategory,
-                                                 price: product.price))
-        }
-        
-        let address = try await addressController.getAddressFromId(client.$address.id, for: req)
-        
-        let payment: PayementMethod?
-        
-        if let paymentID = invoice.$payment.id {
-            let paymentResponse = try await req.client.get("http://\(serverIP):\(serverPort)/payment/\(paymentID)", headers: req.headers)
-            
-            guard var paymentData = paymentResponse.body, let data = paymentData.readData(length: paymentData.readableBytes) else {
-                throw Abort(.internalServerError)
-            }
-            
-            payment = try JSONDecoder().decode(PayementMethod.self, from: data)
-        } else {
-            payment = nil
-        }
-        
-        var clientName: String = ""
-        
-        if let firstname = client.firstname,
-           let lastname = client.lastname {
-            clientName = "\((client.gender  == .man ? "M. " : client.gender == .woman ? "Mme." : ""))\(firstname) \(lastname.uppercased())"
-        }
-        
-        if let company = client.company {
-            if !clientName.isEmpty {
-                clientName.append(" - ")
-            }
-            clientName.append(company)
-        }
-        
-        var hasComment = false
-        if let comment = invoice.comment {
-            hasComment = !comment.isEmpty
-        }
-        
-        var interestMessage = ""
-        
-        if let maxInterests = invoice.maxInterests,
-           let maxLimitInterests = invoice.limitMaxInterests,
-           maxInterests > 0,
-           maxLimitInterests >= Date() {
-            if invoice.totalDelay < maxInterests {
-                interestMessage = "De comme un accord, les intérêts sont plafonnés à \(maxInterests.twoDigitPrecision) € pour un payement avant le \(maxLimitInterests.dateOnly)"
-            } else {
-                interestMessage = "\(invoice.totalDelay.twoDigitPrecision) € (Plafonné à \(maxInterests.twoDigitPrecision) € pour un payement avant le \(maxLimitInterests.dateOnly))"
-            }
-        } else {
-            interestMessage = "((\(invoice.total.twoDigitPrecision) * 3 * 0,0077 * \(invoice.delayDays)) / 365) + 40"
-        }
-        
-        let materialsProducts = getPdfProductList(products, for: .material)
-        let servicesProducts = getPdfProductList(products, for: .service)
-        let diversProducts = getPdfProductList(products, for: .divers)
-        
-        let page = req.view.render("invoice", Invoice.PDF(creationDate: Date().dateOnly,
-                                                          reference: invoice.reference,
-                                                          clientName: clientName,
-                                                          clientAddress: "\(address.streetNumber) \(address.roadName)",
-                                                          clientCity: "\(address.zipCode), \(address.city)",
-                                                          clientCountry: address.country,
-                                                          internalReference: internalRef,
-                                                          object: invoice.object,
-                                                          paymentTitle: payment?.title ?? "",
-                                                          iban: payment?.iban ?? "",
-                                                          bic: payment?.bic ?? "",
-                                                          total: invoice.total.twoDigitPrecision,
-                                                          grandTotal: invoice.grandTotal.twoDigitPrecision,
-                                                          materialsProducts: materialsProducts,
-                                                          servicesProducts: servicesProducts,
-                                                          diversProducts: diversProducts,
-                                                          totalServices: invoice.totalServices.twoDigitPrecision,
-                                                          totalMaterials: invoice.totalMaterials.twoDigitPrecision,
-                                                          totalDivers: invoice.totalDivers.twoDigitPrecision,
-                                                          limitDate: invoice.limitPayementDate.dateOnly,
-                                                          facturationDate: invoice.facturationDate.dateOnly,
-                                                          delayDays: "\(invoice.delayDays)",
-                                                          totalDelay: "\(invoice.totalDelay.twoDigitPrecision)",
-                                                          tva: client.tva ?? "",
-                                                          siret: client.siret ?? "",
-                                                          hasTva: client.tva != nil,
-                                                          hasSiret: client.siret != nil,
-                                                          hasADelay: invoice.totalDelay > 0.0,
-                                                          hasComment: hasComment,
-                                                          comment: invoice.comment ?? "",
-                                                          interestMessage: interestMessage))
-        
-        let pages = try [page]
-            .flatten(on: req.eventLoop)
-            .map({ views in
-                views.map { view in
-                    Page(view.data)
+        for retry in 0..<3 {
+            do {
+                file = try await req.fileio.collectFile(at: "/home/vapor/Public/\(reference).pdf")
+            } catch {
+                if retry == 2 {
+                    throw Abort(.internalServerError)
+                } else {
+                    try await saveAsPDF(on: req, reference: reference)
                 }
-            }).wait()
+            }
+        }
         
-        document.pages = pages
-        let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop, title: invoice.reference)
-        
-        return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(data: pdf))
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(buffer: file))
+//        let document = Document(margins: 15)
+//
+//        let reference = req.parameters.get("reference")
+//        let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
+//        let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
+//
+//        guard let reference = reference,
+//              let invoice = try await Invoice.query(on: req.db).filter(\.$reference == reference).first(),
+//              let id = invoice.id,
+//              let client = try await Client.find(invoice.$client.id, on: req.db),
+//              let internalRef = try await InternalReference.query(on: req.db).filter(\.$invoice.$id == id).first()?.ref else {
+//            throw Abort(.notFound)
+//        }
+//
+//        let productsInvoice = try await ProductInvoice.query(on: req.db).filter(\.$invoice.$id == id).all()
+//        var products: [Product.Informations] = []
+//
+//        for productInvoice in productsInvoice {
+//            guard let product = try await Product.find(productInvoice.$product.id, on: req.db), let productId = product.id else { throw Abort(.notAcceptable) }
+//            products.append(Product.Informations(id: productId,
+//                                                 quantity: productInvoice.quantity,
+//                                                 reduction: productInvoice.reduction,
+//                                                 title: product.title,
+//                                                 unity: product.unity,
+//                                                 domain: product.domain,
+//                                                 productCategory: product.productCategory,
+//                                                 price: product.price))
+//        }
+//
+//        let address = try await addressController.getAddressFromId(client.$address.id, for: req)
+//
+//        let payment: PayementMethod?
+//
+//        if let paymentID = invoice.$payment.id {
+//            let paymentResponse = try await req.client.get("http://\(serverIP):\(serverPort)/payment/\(paymentID)", headers: req.headers)
+//
+//            guard var paymentData = paymentResponse.body, let data = paymentData.readData(length: paymentData.readableBytes) else {
+//                throw Abort(.internalServerError)
+//            }
+//
+//            payment = try JSONDecoder().decode(PayementMethod.self, from: data)
+//        } else {
+//            payment = nil
+//        }
+//
+//        var clientName: String = ""
+//
+//        if let firstname = client.firstname,
+//           let lastname = client.lastname {
+//            clientName = "\((client.gender  == .man ? "M. " : client.gender == .woman ? "Mme." : ""))\(firstname) \(lastname.uppercased())"
+//        }
+//
+//        if let company = client.company {
+//            if !clientName.isEmpty {
+//                clientName.append(" - ")
+//            }
+//            clientName.append(company)
+//        }
+//
+//        var hasComment = false
+//        if let comment = invoice.comment {
+//            hasComment = !comment.isEmpty
+//        }
+//
+//        var interestMessage = ""
+//
+//        if let maxInterests = invoice.maxInterests,
+//           let maxLimitInterests = invoice.limitMaxInterests,
+//           maxInterests > 0,
+//           maxLimitInterests >= Date() {
+//            if invoice.totalDelay < maxInterests {
+//                interestMessage = "De comme un accord, les intérêts sont plafonnés à \(maxInterests.twoDigitPrecision) € pour un payement avant le \(maxLimitInterests.dateOnly)"
+//            } else {
+//                interestMessage = "\(invoice.totalDelay.twoDigitPrecision) € (Plafonné à \(maxInterests.twoDigitPrecision) € pour un payement avant le \(maxLimitInterests.dateOnly))"
+//            }
+//        } else {
+//            interestMessage = "((\(invoice.total.twoDigitPrecision) * 3 * 0,0077 * \(invoice.delayDays)) / 365) + 40"
+//        }
+//
+//        let materialsProducts = getPdfProductList(products, for: .material)
+//        let servicesProducts = getPdfProductList(products, for: .service)
+//        let diversProducts = getPdfProductList(products, for: .divers)
+//
+//        let page = req.view.render("invoice", Invoice.PDF(creationDate: Date().dateOnly,
+//                                                          reference: invoice.reference,
+//                                                          clientName: clientName,
+//                                                          clientAddress: "\(address.streetNumber) \(address.roadName)",
+//                                                          clientCity: "\(address.zipCode), \(address.city)",
+//                                                          clientCountry: address.country,
+//                                                          internalReference: internalRef,
+//                                                          object: invoice.object,
+//                                                          paymentTitle: payment?.title ?? "",
+//                                                          iban: payment?.iban ?? "",
+//                                                          bic: payment?.bic ?? "",
+//                                                          total: invoice.total.twoDigitPrecision,
+//                                                          grandTotal: invoice.grandTotal.twoDigitPrecision,
+//                                                          materialsProducts: materialsProducts,
+//                                                          servicesProducts: servicesProducts,
+//                                                          diversProducts: diversProducts,
+//                                                          totalServices: invoice.totalServices.twoDigitPrecision,
+//                                                          totalMaterials: invoice.totalMaterials.twoDigitPrecision,
+//                                                          totalDivers: invoice.totalDivers.twoDigitPrecision,
+//                                                          limitDate: invoice.limitPayementDate.dateOnly,
+//                                                          facturationDate: invoice.facturationDate.dateOnly,
+//                                                          delayDays: "\(invoice.delayDays)",
+//                                                          totalDelay: "\(invoice.totalDelay.twoDigitPrecision)",
+//                                                          tva: client.tva ?? "",
+//                                                          siret: client.siret ?? "",
+//                                                          hasTva: client.tva != nil,
+//                                                          hasSiret: client.siret != nil,
+//                                                          hasADelay: invoice.totalDelay > 0.0,
+//                                                          hasComment: hasComment,
+//                                                          comment: invoice.comment ?? "",
+//                                                          interestMessage: interestMessage))
+//
+//        let pages = try [page]
+//            .flatten(on: req.eventLoop)
+//            .map({ views in
+//                views.map { view in
+//                    Page(view.data)
+//                }
+//            }).wait()
+//
+//        document.pages = pages
+//        let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop, title: invoice.reference)
+//
+//        return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(data: pdf))
     }
     
     /// Send invoice remainder
@@ -718,6 +758,135 @@ struct InvoiceController: RouteCollection {
         }
         
         return name
+    }
+    
+    /// Save the invoice as PDF
+    private func saveAsPDF(on req: Request, reference: String) async throws {
+        let document = Document(margins: 15)
+        
+        let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
+        let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
+        
+        guard let invoice = try await Invoice.query(on: req.db).filter(\.$reference == reference).first(),
+              let id = invoice.id,
+              let client = try await Client.find(invoice.$client.id, on: req.db),
+              let internalRef = try await InternalReference.query(on: req.db).filter(\.$invoice.$id == id).first()?.ref else {
+            throw Abort(.notFound)
+        }
+        
+        let productsInvoice = try await ProductInvoice.query(on: req.db).filter(\.$invoice.$id == id).all()
+        var products: [Product.Informations] = []
+        
+        for productInvoice in productsInvoice {
+            guard let product = try await Product.find(productInvoice.$product.id, on: req.db), let productId = product.id else { throw Abort(.notAcceptable) }
+            products.append(Product.Informations(id: productId,
+                                                 quantity: productInvoice.quantity,
+                                                 reduction: productInvoice.reduction,
+                                                 title: product.title,
+                                                 unity: product.unity,
+                                                 domain: product.domain,
+                                                 productCategory: product.productCategory,
+                                                 price: product.price))
+        }
+        
+        let address = try await addressController.getAddressFromId(client.$address.id, for: req)
+        
+        let payment: PayementMethod?
+        
+        if let paymentID = invoice.$payment.id {
+            let paymentResponse = try await req.client.get("http://\(serverIP):\(serverPort)/payment/\(paymentID)", headers: req.headers)
+            
+            guard var paymentData = paymentResponse.body, let data = paymentData.readData(length: paymentData.readableBytes) else {
+                throw Abort(.internalServerError)
+            }
+            
+            payment = try JSONDecoder().decode(PayementMethod.self, from: data)
+        } else {
+            payment = nil
+        }
+        
+        var clientName: String = ""
+        
+        if let firstname = client.firstname,
+           let lastname = client.lastname {
+            clientName = "\((client.gender  == .man ? "M. " : client.gender == .woman ? "Mme." : ""))\(firstname) \(lastname.uppercased())"
+        }
+        
+        if let company = client.company {
+            if !clientName.isEmpty {
+                clientName.append(" - ")
+            }
+            clientName.append(company)
+        }
+        
+        var hasComment = false
+        if let comment = invoice.comment {
+            hasComment = !comment.isEmpty
+        }
+        
+        var interestMessage = ""
+        
+        if let maxInterests = invoice.maxInterests,
+           let maxLimitInterests = invoice.limitMaxInterests,
+           maxInterests > 0,
+           maxLimitInterests >= Date() {
+            if invoice.totalDelay < maxInterests {
+                interestMessage = "De comme un accord, les intérêts sont plafonnés à \(maxInterests.twoDigitPrecision) € pour un payement avant le \(maxLimitInterests.dateOnly)"
+            } else {
+                interestMessage = "\(invoice.totalDelay.twoDigitPrecision) € (Plafonné à \(maxInterests.twoDigitPrecision) € pour un payement avant le \(maxLimitInterests.dateOnly))"
+            }
+        } else {
+            interestMessage = "((\(invoice.total.twoDigitPrecision) * 3 * 0,0077 * \(invoice.delayDays)) / 365) + 40"
+        }
+        
+        let materialsProducts = getPdfProductList(products, for: .material)
+        let servicesProducts = getPdfProductList(products, for: .service)
+        let diversProducts = getPdfProductList(products, for: .divers)
+        
+        let page = req.view.render("invoice", Invoice.PDF(creationDate: Date().dateOnly,
+                                                          reference: invoice.reference,
+                                                          clientName: clientName,
+                                                          clientAddress: "\(address.streetNumber) \(address.roadName)",
+                                                          clientCity: "\(address.zipCode), \(address.city)",
+                                                          clientCountry: address.country,
+                                                          internalReference: internalRef,
+                                                          object: invoice.object,
+                                                          paymentTitle: payment?.title ?? "",
+                                                          iban: payment?.iban ?? "",
+                                                          bic: payment?.bic ?? "",
+                                                          total: invoice.total.twoDigitPrecision,
+                                                          grandTotal: invoice.grandTotal.twoDigitPrecision,
+                                                          materialsProducts: materialsProducts,
+                                                          servicesProducts: servicesProducts,
+                                                          diversProducts: diversProducts,
+                                                          totalServices: invoice.totalServices.twoDigitPrecision,
+                                                          totalMaterials: invoice.totalMaterials.twoDigitPrecision,
+                                                          totalDivers: invoice.totalDivers.twoDigitPrecision,
+                                                          limitDate: invoice.limitPayementDate.dateOnly,
+                                                          facturationDate: invoice.facturationDate.dateOnly,
+                                                          delayDays: "\(invoice.delayDays)",
+                                                          totalDelay: "\(invoice.totalDelay.twoDigitPrecision)",
+                                                          tva: client.tva ?? "",
+                                                          siret: client.siret ?? "",
+                                                          hasTva: client.tva != nil,
+                                                          hasSiret: client.siret != nil,
+                                                          hasADelay: invoice.totalDelay > 0.0,
+                                                          hasComment: hasComment,
+                                                          comment: invoice.comment ?? "",
+                                                          interestMessage: interestMessage))
+        
+        let pages = try [page]
+            .flatten(on: req.eventLoop)
+            .map({ views in
+                views.map { view in
+                    Page(view.data)
+                }
+            }).wait()
+        
+        document.pages = pages
+        let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop, title: invoice.reference)
+        
+        try await req.fileio.writeFile(ByteBuffer(data: pdf), at: "/home/vapor/Gestion-server/Public/\(reference).pdf")
     }
 }
 
