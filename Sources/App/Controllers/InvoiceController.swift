@@ -328,13 +328,13 @@ struct InvoiceController: RouteCollection {
         for _ in 0..<3 {
             do {
                 file = try await req.fileio.collectFile(at: "/home/vapor/Public/\(reference).pdf")
-                return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(buffer: file))
+                return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(buffer: file))
             } catch {
                 try await saveAsPDF(on: req, reference: reference)
             }
         }
         
-        return GlobalFunctions.shared.formatResponse(status: .internalServerError, body: .empty)
+        return GlobalFunctions.shared.formatResponse(status: .internalServerError,  body: .empty)
 //        let document = Document(margins: 15)
 //
 //        let reference = req.parameters.get("reference")
