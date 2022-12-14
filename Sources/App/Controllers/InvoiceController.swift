@@ -325,19 +325,16 @@ struct InvoiceController: RouteCollection {
         
         var file = ByteBuffer()
         
-        for retry in 0..<3 {
+        for _ in 0..<3 {
             do {
                 file = try await req.fileio.collectFile(at: "/home/vapor/Public/\(reference).pdf")
+                return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(buffer: file))
             } catch {
-                if retry == 2 {
-                    throw Abort(.internalServerError)
-                } else {
-                    try await saveAsPDF(on: req, reference: reference)
-                }
+                try await saveAsPDF(on: req, reference: reference)
             }
         }
         
-        return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(buffer: file))
+        return GlobalFunctions.shared.formatResponse(status: .internalServerError, body: .empty)
 //        let document = Document(margins: 15)
 //
 //        let reference = req.parameters.get("reference")
