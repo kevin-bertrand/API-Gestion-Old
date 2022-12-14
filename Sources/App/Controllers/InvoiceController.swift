@@ -101,6 +101,8 @@ struct InvoiceController: RouteCollection {
             try await ProductInvoice(quantity: product.quantity, productID: product.productID, invoiceID: invoiceId).save(on: req.db)
         }
         
+        try await saveAsPDF(on: req, reference: invoice.reference)
+        
         return GlobalFunctions.shared.formatResponse(status: .created, body: .init(data: try JSONEncoder().encode("\(invoice.reference) is created!")))
     }
     
@@ -201,6 +203,8 @@ struct InvoiceController: RouteCollection {
                                         totalDivers: invoice.totalDivers,
                                         grandTotal: invoice.total,
                                         in: req)
+            
+            try await saveAsPDF(on: req, reference: invoice.reference)
         }
         
         return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)

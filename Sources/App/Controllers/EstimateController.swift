@@ -90,6 +90,8 @@ struct EstimateController: RouteCollection {
             try await ProductEstimate(quantity: product.quantity, productID: product.productID, estimateID: try estimate.requireID()).save(on: req.db)
         }
         
+        try await saveAsPDF(on: req, id: estimate.id)
+        
         return GlobalFunctions.shared.formatResponse(status: .created, body: .empty)
     }
     
@@ -143,6 +145,8 @@ struct EstimateController: RouteCollection {
             .set(\.$ref, to: updateEstimate.internalReference)
             .filter(\.$estimate.$id == updateEstimate.id)
             .update()
+        
+        try await saveAsPDF(on: req, id: estimate.id)
         
         return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
@@ -290,8 +294,68 @@ struct EstimateController: RouteCollection {
     
     /// Generate a PDF from the Database for a selected ID
     private func pdf(req: Request) async throws -> Response {
-        let document = Document(margins: 15)
         let id = req.parameters.get("id", as: UUID.self)
+        
+        guard let estimate = try await Estimate.find(id, on: req.db) else { throw Abort(.notAcceptable) }
+        
+        var file = ByteBuffer()
+        
+        for _ in 0..<3 {
+            do {
+                file = try await req.fileio.collectFile(at: "/home/vapor/Gestion-server/Public/\(estimate.reference).pdf")
+                return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(buffer: file))
+            } catch {
+                try await saveAsPDF(on: req, id: id)
+            }
+        }
+        
+        throw Abort(.internalServerError)
+    }
+    
+    // MARK: Utilities functions
+    /// Getting all estimates
+    private func getAllEstimates(req: Request) async throws -> [Estimate.Summary] {
+        return formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db).with(\.$client).sort(\.$reference).all())
+    }
+    
+    /// Format estimate summary
+    private func formatEstimatesSummary(req: Request, estimates: [Estimate]) -> [Estimate.Summary] {
+        var estimateSummary: [Estimate.Summary] = []
+        
+        for estimate in estimates {
+            if let client = estimate.$client.value {
+                estimateSummary.append(Estimate.Summary(id: estimate.id,
+                                                        client: Client.Summary(firstname: client.firstname,
+                                                                               lastname: client.lastname,
+                                                                               company: client.company),
+                                                        reference: estimate.reference,
+                                                        total: estimate.total,
+                                                        status: estimate.status,
+                                                        limitValidifyDate: estimate.limitValidityDate,
+                                                        isArchive: estimate.isArchive))
+            }
+        }
+        
+        return estimateSummary
+    }
+    
+    /// Getting product list for PDF
+    private func getPdfProductList(_ products: [Product.Informations], for category: ProductCategory) -> [[String]] {
+        return (
+            products
+                .filter({$0.productCategory == category})
+                .map({ return [$0.title,
+                               $0.quantity.twoDigitPrecision,
+                               "\($0.price.twoDigitPrecision) \($0.unity ?? "")",
+                               "\($0.reduction.twoDigitPrecision) % (\(($0.price * $0.quantity * ($0.reduction/100)).twoDigitPrecision) €)",
+                               "\(($0.price * $0.quantity * ((100-$0.reduction)/100)).twoDigitPrecision) €"]})
+        )
+    }
+    
+    /// Save the invoice as PDF
+    private func saveAsPDF(on req: Request, id: UUID?) async throws {
+        let document = Document(margins: 15)
+
         guard let id = id,
               let estimate = try await Estimate.find(id, on: req.db),
               let client = try await Client.find(estimate.$client.id, on: req.db),
@@ -366,47 +430,7 @@ struct EstimateController: RouteCollection {
         
         document.pages = pages
         let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop, title: estimate.reference)
-        
-        return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(data: pdf))
-    }
-    
-    // MARK: Utilities functions
-    /// Getting all estimates
-    private func getAllEstimates(req: Request) async throws -> [Estimate.Summary] {
-        return formatEstimatesSummary(req: req, estimates: try await Estimate.query(on: req.db).with(\.$client).sort(\.$reference).all())
-    }
-    
-    /// Format estimate summary
-    private func formatEstimatesSummary(req: Request, estimates: [Estimate]) -> [Estimate.Summary] {
-        var estimateSummary: [Estimate.Summary] = []
-        
-        for estimate in estimates {
-            if let client = estimate.$client.value {
-                estimateSummary.append(Estimate.Summary(id: estimate.id,
-                                                        client: Client.Summary(firstname: client.firstname,
-                                                                               lastname: client.lastname,
-                                                                               company: client.company),
-                                                        reference: estimate.reference,
-                                                        total: estimate.total,
-                                                        status: estimate.status,
-                                                        limitValidifyDate: estimate.limitValidityDate,
-                                                        isArchive: estimate.isArchive))
-            }
-        }
-        
-        return estimateSummary
-    }
-    
-    /// Getting product list for PDF
-    private func getPdfProductList(_ products: [Product.Informations], for category: ProductCategory) -> [[String]] {
-        return (
-            products
-                .filter({$0.productCategory == category})
-                .map({ return [$0.title,
-                               $0.quantity.twoDigitPrecision,
-                               "\($0.price.twoDigitPrecision) \($0.unity ?? "")",
-                               "\($0.reduction.twoDigitPrecision) % (\(($0.price * $0.quantity * ($0.reduction/100)).twoDigitPrecision) €)",
-                               "\(($0.price * $0.quantity * ((100-$0.reduction)/100)).twoDigitPrecision) €"]})
-        )
+                
+        try await req.fileio.writeFile(ByteBuffer(data: pdf), at: "/home/vapor/Gestion-server/Public/\(estimate.reference).pdf")
     }
 }
