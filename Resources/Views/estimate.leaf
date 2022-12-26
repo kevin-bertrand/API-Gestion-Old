@@ -115,11 +115,13 @@
         <div class="row justify-content-between section align-items-center addresses">
             <div class="col-5">
                 <div class="bold">
-                    <p>Desyntic</p>
-                    <p>Siret : 89158565500014</p>
+                    <p>Kevin Bertrand (Desyntic)</p>
                     <p>7 Place Fulgence Bienvenue</p>
+                    <p>Boite 112</p>
                     <p>77600 Bussy-saint-Georges</p>
                     <p>France</p>
+                    <p>Siret : 89158565500014</p>
+                    <p>TVA : FR19891585655</p>
                 </div>
                 <div><p>Portable: +33 7 78 84 01 90</p></div>
                 <div><p>contact@desyntic.com</p></div>
@@ -132,12 +134,6 @@
                 <div><p>#(clientAddress)</p></div>
                 <div><p>#(clientCity)</p></div>
                 <div><p>#(clientCountry)</p></div>
-                #if(hasTva):
-                    <div><p>TVA: #(tva)</p></div>
-                #endif
-                #if(hasSiret):
-                    <div><p>Siret: #(siret)</p></div>
-                #endif
             </div>
         </div>
 
@@ -151,10 +147,12 @@
                 <thead>
                     <tr>
                         <th>Désignation</th>
+                        <th>PU HT</th>
+                        <th>Taux<br>T.V.A.</th>
                         <th>Qté.</th>
                         <th>PU TTC</th>
-                        <th>Remise</th>
-                        <th>Mont TTC (avec remise)</th>
+                        <th>Prix Total HT</th>
+                        <th>Prix Total TTC</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -225,6 +223,10 @@
                 <div class="row justify-content-between margin-vertical">
                     <div class="col-5">Total HT</div>
                     <div class="col-5 rightSection">#(total) €</div>
+                </div>
+                <div class="row justify-content-between bold margin-vertical">
+                    <div class="col-5">Montant total TVA</div>
+                    <div class="col-5 rightSection">0%</div>
                 </div>
                 <div class="row justify-content-between bold margin-vertical">
                     <div class="col-5">Total TTC</div>

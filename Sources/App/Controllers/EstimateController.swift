@@ -344,11 +344,16 @@ struct EstimateController: RouteCollection {
         return (
             products
                 .filter({$0.productCategory == category})
-                .map({ return [$0.title,
-                               $0.quantity.twoDigitPrecision,
-                               "\($0.price.twoDigitPrecision) \($0.unity ?? "")",
-                               "\($0.reduction.twoDigitPrecision) % (\(($0.price * $0.quantity * ($0.reduction/100)).twoDigitPrecision) €)",
-                               "\(($0.price * $0.quantity * ((100-$0.reduction)/100)).twoDigitPrecision) €"]})
+                .map({ product in
+                    let total = product.price * product.quantity
+                    
+                    return  [product.title,
+                             "\(product.price.twoDigitPrecision) \(product.unity ?? "")",
+                             "0 %",
+                             product.quantity.twoDigitPrecision,
+                             "\(total.twoDigitPrecision) €",
+                             "\(total.twoDigitPrecision) €"]
+                })
         )
     }
     
