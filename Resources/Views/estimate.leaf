@@ -222,15 +222,15 @@
             </div>
 
             <div class="col-4 rightSection">
-                <div class="row justify-content-between margin-vertical">
+                <div class="row justify-content-between">
                     <div class="col-5">Total HT</div>
                     <div class="col-5 rightSection">#(total) €</div>
                 </div>
-                <div class="row justify-content-between bold margin-vertical">
+                <div class="row justify-content-between bold">
                     <div class="col-5">Montant total TVA</div>
                     <div class="col-5 rightSection">0%</div>
                 </div>
-                <div class="row justify-content-between bold margin-vertical">
+                <div class="row justify-content-between bold">
                     <div class="col-5">Total TTC</div>
                     <div class="col-5 rightSection">#(total) €</div>
                 </div>
