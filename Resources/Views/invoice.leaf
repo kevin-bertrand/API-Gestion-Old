@@ -48,6 +48,10 @@
         margin-bottom: 10px;
     }
 
+    .light-margin-vertical {
+        margin-bottom: 5px;
+    }
+
     .end-table-section {
         background-color: #D4D4D4;
         font-weight: bold;
@@ -224,25 +228,25 @@
             </div>
 
             <div class="col-4 rightSection">
-                <div class="row justify-content-between margin-vertical">
+                <div class="row justify-content-between light-margin-vertical">
                     <div class="col-5">Total HT</div>
                     <div class="col-5 rightSection">#(total) €</div>
                 </div>
-                <div class="row justify-content-between bold margin-vertical">
+                <div class="row justify-content-between light-margin-vertical">
                     <div class="col-5">Montant total TVA</div>
                     <div class="col-5 rightSection">0%</div>
                 </div>
-                <div class="row justify-content-between bold margin-vertical">
+                <div class="row justify-content-between bold light-margin-vertical">
                     <div class="col-5">Total TTC</div>
                     <div class="col-5 rightSection">#(total) €</div>
                 </div>
                 
                 #if(hasADelay):
-                    <div class="row justify-content-between margin-vertical">
+                    <div class="row justify-content-between light-margin-vertical">
                         <div class="col-5">Total intérêts</div>
                         <div class="col-5 rightSection">#(totalDelay) €</div>
                     </div>
-                    <div class="row justify-content-between bold margin-vertical">
+                    <div class="row justify-content-between bold light-margin-vertical">
                         <div class="col-5">Grand total</div>
                         <div class="col-5 rightSection">#(grandTotal) €</div>
                     </div>

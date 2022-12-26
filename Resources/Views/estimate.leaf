@@ -51,6 +51,10 @@
         margin-top: 20px;
         margin-bottom: 20px;
     }
+    
+    .light-margin-vertical {
+        margin-bottom: 5px;
+    }
 
     .end-table-section {
         background-color: #D4D4D4;
@@ -222,15 +226,15 @@
             </div>
 
             <div class="col-4 rightSection">
-                <div class="row justify-content-between">
+                <div class="row justify-content-between light-margin-vertical">
                     <div class="col-5">Total HT</div>
                     <div class="col-5 rightSection">#(total) €</div>
                 </div>
-                <div class="row justify-content-between bold">
+                <div class="row justify-content-between light-margin-vertical">
                     <div class="col-5">Montant total TVA</div>
                     <div class="col-5 rightSection">0%</div>
                 </div>
-                <div class="row justify-content-between bold">
+                <div class="row justify-content-between light-margin-vertical bold">
                     <div class="col-5">Total TTC</div>
                     <div class="col-5 rightSection">#(total) €</div>
                 </div>
