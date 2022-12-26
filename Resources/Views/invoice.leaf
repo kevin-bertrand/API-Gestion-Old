@@ -142,7 +142,6 @@
                         <th>PU HT</th>
                         <th>Taux<br>T.V.A.</th>
                         <th>Qté.</th>
-                        <th>PU TTC</th>
                         <th>Prix Total HT</th>
                         <th>Prix Total TTC</th>
                     </tr>
@@ -150,7 +149,7 @@
                 <tbody>
                     #if(count(servicesProducts) > 0):
                         <tr class="table-section-title">
-                            <td colspan="5">Prestations</td>
+                            <td colspan="6">Prestations</td>
                         </tr>
                         #for(service in servicesProducts):
                             <tr>
@@ -163,11 +162,12 @@
                             <td class="end-table-section-title">Total prestations</td>
                             <td colspan="3" class="empty-cell"></td>
                             <td>#(totalServices) €</td>
+                            <td>#(totalServices) €</td>
                         </tr>
                     #endif
                     #if(count(materialsProducts) > 0):
                         <tr class="table-section-title">
-                            <td colspan="5">Matériels</td>
+                            <td colspan="6">Matériels</td>
                         </tr>
                         #for(material in materialsProducts):
                             <tr>
@@ -180,11 +180,12 @@
                             <td class="end-table-section-title">Total prestations</td>
                             <td colspan="3" class="empty-cell"></td>
                             <td>#(totalMaterials) €</td>
+                            <td>#(totalMaterials) €</td>
                         </tr>
                     #endif
                     #if(count(diversProducts) > 0):
                         <tr class="table-section-title">
-                            <td colspan="5">Divers</td>
+                            <td colspan="6">Divers</td>
                         </tr>
                         #for(divers in diversProducts):
                             <tr>
@@ -196,6 +197,7 @@
                         <tr class="end-table-section">
                             <td class="end-table-section-title">Total prestations</td>
                             <td colspan="3" class="empty-cell"></td>
+                            <td>#(totalDivers) €</td>
                             <td>#(totalDivers) €</td>
                         </tr>
                     #endif
