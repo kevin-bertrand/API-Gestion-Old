@@ -110,12 +110,13 @@
         
         <div class="row justify-content-between section align-items-center addresses">
             <div class="col-5">
-                <div class="bold">
-                    <p>Kevin Bertrand (Desyntic)</p>
+                <div>
+                    <p class="bold">Kevin Bertrand (Desyntic)</p>
                     <p>7 Place Fulgence Bienvenue</p>
                     <p>Boite 112</p>
                     <p>77600 Bussy-saint-Georges</p>
                     <p>France</p>
+                    <p>Micro-entreprise</p>
                     <p>Siret : 89158565500014</p>
                     <p>TVA : FR19891585655</p>
                 </div>
