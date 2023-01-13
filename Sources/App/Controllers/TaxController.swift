@@ -1,0 +1,94 @@
+//
+//  TaxController.swift
+//  
+//
+//  Created by Kevin Bertrand on 11/01/2023.
+//
+
+import Fluent
+import Vapor
+
+struct TaxController: RouteCollection {
+    // MARK: Properties
+    
+    // MARK: Route initialisation
+    func boot(routes: RoutesBuilder) throws {
+        let taxGroup = routes.grouped("tax")
+        
+        let tokenGroup = taxGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
+        tokenGroup.get(":year", use: getTaxForYear)
+    }
+    
+    // MARK: Routes functions
+    /// Getting tax for selected year
+    private func getTaxForYear(req: Request) async throws -> Response {
+        guard let year = req.parameters.get("year", as: Int.self) else {
+            throw Abort(.badRequest)
+        }
+        
+        let rates = gettingYearTaxRate(year: year)
+        
+        let revenues = try await MonthRevenue.query(on: req.db)
+            .filter(\.$year == year)
+            .all()
+
+        return GlobalFunctions.shared.formatResponse(status: .accepted,
+                                                     body: .init(data: try JSONEncoder().encode(Tax(tax: calculateTax(revenues: revenues, rates: rates)))))
+    }
+    
+    // MARK: Utilities functions
+    /// Getting year tax rate
+    private func gettingYearTaxRate(year: Int) -> [Int: Int] {
+        let rates: [Int: [Int: Int]] = [
+            2023: [
+                10777: 0,
+                27478: 11,
+                78570: 30,
+                168994: 41,
+                Int.max: 45
+            ]
+        ]
+        
+        var currentRate: [Int: Int] = [:]
+        
+        for rate in rates {
+            if rate.key >= year {
+                currentRate = rate.value
+            }
+        }
+        
+        return currentRate
+    }
+    
+    /// Calculating year tax
+    private func calculateTax(revenues: [MonthRevenue], rates: [Int: Int]) -> Double {
+        let numberOfMonths = revenues.count
+        var sum = 0.0
+        var sumTax = 0.0
+        
+        for revenue in revenues {
+            print("Revenu: \(revenue.month)/\(revenue.year) - \(revenue.grandTotal) €")
+            sum += revenue.grandTotal
+        }
+
+        if sum > 0 {
+            if numberOfMonths < 12 {
+                let average = sum / Double(numberOfMonths)
+                sum = average * 12
+            }
+            
+            for (key, value) in rates.sorted(by: {$0.key < $1.key}) {
+                if sum - Double(key) > 0.0 {
+                    sumTax += Double(key) * Double(value)
+                    sum -= Double(key)
+                } else {
+                    sumTax += sum * Double(value)
+                    break
+                }
+            }
+        }
+        
+        return sumTax
+    }
+}
+
