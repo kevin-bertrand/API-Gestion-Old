@@ -79,10 +79,10 @@ struct TaxController: RouteCollection {
             
             for (key, value) in rates.sorted(by: {$0.key < $1.key}) {
                 if sum - Double(key) > 0.0 {
-                    sumTax += Double(key) * Double(value)
+                    sumTax += Double(key) * (100.0 / Double(value))
                     sum -= Double(key)
                 } else {
-                    sumTax += sum * Double(value)
+                    sumTax += sum * (100.0 / Double(value))
                     break
                 }
             }
