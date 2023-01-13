@@ -185,23 +185,40 @@ struct InvoiceController: RouteCollection {
             yearDateFormatter.dateFormat = "yyyy"
             monthDateFormatter.dateFormat = "MM"
             
+            var service = invoice.totalServices
+            var divers = invoice.totalDivers
+            var material = invoice.totalMaterials
+            var total = invoice.total
+            let totalDelay = invoice.totalDelay
+            
+            if totalDelay > 0.0 {
+                let servicePercent = service / total
+                let diversPercent = divers / total
+                let materialPercent = material / total
+                
+                service += totalDelay * servicePercent
+                material += totalDelay * materialPercent
+                divers += totalDelay * diversPercent
+                total = service + material + divers
+            }
+            
             guard let year = Int(yearDateFormatter.string(from: date)),
                   let month = Int(monthDateFormatter.string(from: date)) else {
                 throw Abort(.internalServerError)
             }
             
             try await addToYearRevenue(year: year,
-                                       totalServices: invoice.totalServices,
-                                       totalMaterial: invoice.totalMaterials,
-                                       totalDivers: invoice.totalDivers,
-                                       grandTotal: invoice.total,
+                                       totalServices: service,
+                                       totalMaterial: material,
+                                       totalDivers: divers,
+                                       grandTotal: total,
                                        in: req)
             try await addToMonthRevenue(month: month,
                                         year: year,
-                                        totalServices: invoice.totalServices,
-                                        totalMaterial: invoice.totalMaterials,
-                                        totalDivers: invoice.totalDivers,
-                                        grandTotal: invoice.total,
+                                        totalServices: service,
+                                        totalMaterial: material,
+                                        totalDivers: divers,
+                                        grandTotal: total,
                                         in: req)
             
             try await saveAsPDF(on: req, reference: invoice.reference)
