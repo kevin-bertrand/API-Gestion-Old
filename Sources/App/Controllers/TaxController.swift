@@ -68,42 +68,31 @@ struct TaxController: RouteCollection {
         var isAllYear: Bool = false
         
         for revenue in revenues {
-            print("Revenu: \(revenue.month)/\(revenue.year) - \(revenue.grandTotal) €")
             sum += revenue.grandTotal
             
             if revenue.month == 12 {
                 isAllYear = true
             }
         }
-
-        print("Sum: \(sum)")
         
         sum *= 0.7
         
-        print("Sum after deduction: \(sum) €")
-        
         if sum > 0 {
             if !isAllYear {
-                print("Is not all year")
                 let average = sum / Double(numberOfMonths)
                 sum = average * 12
             }
             
             for (key, value) in rates.sorted(by: {$0.key < $1.key}) {
-                print("Tax: \(key) €- \(value) %")
                 if sum - Double(key) > 0.0 {
                     sumTax += Double(key) * (Double(value) / 100 )
                     sum -= Double(key)
                 } else {
-                    print("Last check")
                     sumTax += sum * (Double(value) / 100)
-                    print("ok")
                     break
                 }
             }
         }
-        
-        print("SumTax: \(sumTax) €")
         
         return sumTax
     }
