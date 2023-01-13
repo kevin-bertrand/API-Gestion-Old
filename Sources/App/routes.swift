@@ -14,4 +14,5 @@ func routes(_ app: Application) throws {
     try app.register(collection: RevenuesController())
     try app.register(collection: InternalReferenceController())
     try app.register(collection: WidgetController())
+    try app.register(collection: TaxController())
 }
