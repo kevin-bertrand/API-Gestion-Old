@@ -97,10 +97,13 @@ struct TaxController: RouteCollection {
                 } else {
                     print("Last check")
                     sumTax += sum * (100.0 / Double(value))
+                    print("ok")
                     break
                 }
             }
         }
+        
+        print("SumTax: \(sumTax) €")
         
         return sumTax
     }
