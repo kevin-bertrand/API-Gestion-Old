@@ -71,7 +71,7 @@ struct TaxController: RouteCollection {
             print("Revenu: \(revenue.month)/\(revenue.year) - \(revenue.grandTotal) €")
             sum += revenue.grandTotal
             
-            if revenue.year == 12 {
+            if revenue.month == 12 {
                 isAllYear = true
             }
         }
