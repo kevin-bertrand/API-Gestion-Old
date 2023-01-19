@@ -75,7 +75,7 @@ struct TaxController: RouteCollection {
             }
         }
         
-        sum *= 0.7
+        sum *= 0.66
         
         if sum > 0 {
             if !isAllYear {
