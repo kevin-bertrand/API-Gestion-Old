@@ -75,22 +75,33 @@ struct TaxController: RouteCollection {
             }
         }
         
-        sum *= 0.66
-        
         if sum > 0 {
             if !isAllYear {
                 let average = sum / Double(numberOfMonths)
                 sum = average * 12
             }
             
+            sum *= 0.66
+            var keyIndex = 0
+            var previousKey = 0
+            
             for (key, value) in rates.sorted(by: {$0.key < $1.key}) {
-                if sum - Double(key) > 0.0 {
-                    sumTax += Double(key) * (Double(value) / 100 )
-                    sum -= Double(key)
+                if sum > Double(key) {
+                    if keyIndex == 0 {
+                        sumTax += Double(key) * (Double(value) / 100.0)
+                    } else if (Double(key) - Double(previousKey)) > 0 {
+                        sumTax += (Double(key) - Double(previousKey)) * (Double(value) / 100.0)
+                    }
                 } else {
-                    sumTax += sum * (Double(value) / 100)
-                    break
+                    if keyIndex == 0 {
+                        sumTax += Double(sum) * (Double(value) / 100.0)
+                    } else if (Double(sum) - Double(previousKey)) > 0 {
+                        sumTax += (Double(sum) - Double(previousKey)) * (Double(value) / 100.0)
+                    }
                 }
+                
+                previousKey = key
+                keyIndex += 1
             }
         }
         
