@@ -23,7 +23,6 @@ struct InvoiceController: RouteCollection {
         tokenGroup.patch("paied", ":id", use: isPaied)
         tokenGroup.patch(use: update)
         tokenGroup.get(use: getList)
-        tokenGroup.get("filter", ":filter", use: getList)
         tokenGroup.get(":id", use: getInvoice)
         tokenGroup.get("pdf", ":reference", use: pdf)
         tokenGroup.patch("delays", ":id", use: checkDelays)
@@ -229,54 +228,44 @@ struct InvoiceController: RouteCollection {
     
     /// Getting invoice list
     private func getList(req: Request) async throws -> Response {
-        let filter = req.parameters.get("filter", as: Int.self)
+        let dateFilter = try req.content.decode(Invoice.Getting.self)
+        let startDate = (dateFilter.startDate ?? "").toDate
+        let endDate = (dateFilter.endDate ?? "").toDate
         let invoices: [Invoice.Summary]
         
-        if let filter = filter {
-            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db).with(\.$client).sort(\.$facturationDate).range(..<filter).all())
+        if startDate != nil && endDate != nil {
+            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db)
+                .with(\.$client)
+                .filter(\.$facturationDate >= startDate!)
+                .filter(\.$facturationDate <= endDate!)
+                .all())
+        } else if startDate != nil {
+            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db)
+                .with(\.$client)
+                .filter(\.$facturationDate >= startDate!)
+                .all())
+        } else if endDate != nil {
+            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db)
+                .with(\.$client)
+                .filter(\.$facturationDate <= endDate!)
+                .all())
         } else {
-            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db).with(\.$client).sort(\.$reference).all())
+            invoices = formatInvoiceSummaray(try await Invoice.query(on: req.db)
+                .with(\.$client)
+                .all())
         }
-        
+
         return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(invoices)))
     }
     
     /// Getting invoice
     private func getInvoice(req: Request) async throws -> Response {
         let id = req.parameters.get("id", as: UUID.self)
-        let dateFilter = try req.content.decode(Invoice.Getting.self)
-        let startDate = (dateFilter.startDate ?? "").toDate
-        let endDate = (dateFilter.endDate ?? "").toDate
         let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
         let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
-        
-        guard let id = id else {
-            throw Abort(.notFound)
-        }
-        
-        let invoice: Invoice?
-        
-        if startDate != nil && endDate != nil {
-            invoice = try await Invoice.query(on: req.db)
-                .filter(\.$id == id)
-                .filter(\.$facturationDate >= startDate!)
-                .filter(\.$facturationDate <= endDate!)
-                .first()
-        } else if startDate != nil {
-            invoice = try await Invoice.query(on: req.db)
-                .filter(\.$id == id)
-                .filter(\.$facturationDate >= startDate!)
-                .first()
-        } else if endDate != nil {
-            invoice = try await Invoice.query(on: req.db)
-                .filter(\.$id == id)
-                .filter(\.$facturationDate <= endDate!)
-                .first()
-        } else {
-            invoice = try await Invoice.find(id, on: req.db)
-        }
-         
-        guard let invoice,
+
+        guard let id,
+              let invoice = try await Invoice.find(id, on: req.db),
               let client = try await Client.find(invoice.$client.id, on: req.db),
               let internalRef = try await InternalReference.query(on: req.db).filter(\.$invoice.$id == invoice.requireID()).first()?.ref else {
             throw Abort(.notFound)
