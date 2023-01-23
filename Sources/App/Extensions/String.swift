@@ -15,7 +15,7 @@ extension String {
     
     var toDate: Date? {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.dateFormat = "dd/MM/yyyy"
         return formatter.date(from: self)
     }
 }
