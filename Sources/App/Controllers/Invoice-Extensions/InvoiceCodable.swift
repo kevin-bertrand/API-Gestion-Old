@@ -118,4 +118,9 @@ extension Invoice {
         let comment: String
         let interestMessage: String
     }
+    
+    struct Getting: Codable {
+        let startDate: String?
+        let endDate: String?
+    }
 }

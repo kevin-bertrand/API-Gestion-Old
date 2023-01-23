@@ -244,11 +244,39 @@ struct InvoiceController: RouteCollection {
     /// Getting invoice
     private func getInvoice(req: Request) async throws -> Response {
         let id = req.parameters.get("id", as: UUID.self)
+        let dateFilter = try req.content.decode(Invoice.Getting.self)
+        let startDate = (dateFilter.startDate ?? "").toDate
+        let endDate = (dateFilter.endDate ?? "").toDate
         let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
         let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
         
-        guard let id = id,
-              let invoice = try await Invoice.find(id, on: req.db),
+        guard let id = id else {
+            throw Abort(.notFound)
+        }
+        
+        let invoice: Invoice?
+        
+        if startDate != nil && endDate != nil {
+            invoice = try await Invoice.query(on: req.db)
+                .filter(\.$id == id)
+                .filter(\.$facturationDate >= startDate!)
+                .filter(\.$facturationDate <= endDate!)
+                .first()
+        } else if startDate != nil {
+            invoice = try await Invoice.query(on: req.db)
+                .filter(\.$id == id)
+                .filter(\.$facturationDate >= startDate!)
+                .first()
+        } else if endDate != nil {
+            invoice = try await Invoice.query(on: req.db)
+                .filter(\.$id == id)
+                .filter(\.$facturationDate <= endDate!)
+                .first()
+        } else {
+            invoice = try await Invoice.find(id, on: req.db)
+        }
+         
+        guard let invoice,
               let client = try await Client.find(invoice.$client.id, on: req.db),
               let internalRef = try await InternalReference.query(on: req.db).filter(\.$invoice.$id == invoice.requireID()).first()?.ref else {
             throw Abort(.notFound)
