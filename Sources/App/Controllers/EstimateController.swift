@@ -153,18 +153,32 @@ struct EstimateController: RouteCollection {
     
     /// Getting estimate list
     private func getList(req: Request) async throws -> Response {
-        let filters = req.parameters.get("filter", as: Int.self)
+        let dateFilter = try req.content.decode(Estimate.Getting.self)
+        let startDate = (dateFilter.startDate ?? "").toDate
+        let endDate = (dateFilter.endDate ?? "").toDate
         
         let estimates: [Estimate.Summary]
         
-        if let filters = filters {
-            let estimatesCount = try await Estimate.query(on: req.db).count()
-            let min = (estimatesCount - filters) < 0 ? 0 : (estimatesCount - filters)
-            
-            estimates = formatEstimatesSummary(req: req,
-                                               estimates: try await Estimate.query(on: req.db).with(\.$client).sort(\.$sendingDate).range(min..<estimatesCount).all())
+        if startDate != nil && endDate != nil {
+            estimates = formatEstimateSummary(try await Estimate.query(on: req.db)
+                .with(\.$client)
+                .filter(\.$limitValidityDate >= startDate!)
+                .filter(\.$limitValidityDate <= endDate!)
+                .all())
+        } else if startDate != nil {
+            estimates = formatEstimateSummary(try await Estimate.query(on: req.db)
+                .with(\.$client)
+                .filter(\.$limitValidityDate >= startDate!)
+                .all())
+        } else if endDate != nil {
+            estimates = formatEstimateSummary(try await Estimate.query(on: req.db)
+                .with(\.$client)
+                .filter(\.$limitValidityDate <= endDate!)
+                .all())
         } else {
-            estimates = try await getAllEstimates(req: req)
+            estimates = formatEstimateSummary(try await Estimate.query(on: req.db)
+                .with(\.$client)
+                .all())
         }
         
         return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(estimates)))
@@ -437,5 +451,26 @@ struct EstimateController: RouteCollection {
         let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop, title: estimate.reference)
                 
         try await req.fileio.writeFile(ByteBuffer(data: pdf), at: "/home/vapor/Gestion-server/Public/\(estimate.reference).pdf")
+    }
+    
+    /// Format estimate summary
+    private func formatEstimateSummary(_ estimates: [Estimate]) -> [Estimate.Summary] {
+        var estimatesSummary: [Estimate.Summary] = []
+        
+        for estimate in estimates {
+            if let client = estimate.$client.value {
+                estimatesSummary.append(.init(id: estimate.id,
+                                              client: Client.Summary(firstname: client.firstname,
+                                                                     lastname: client.lastname,
+                                                                     company: client.company),
+                                              reference: estimate.reference,
+                                              total: estimate.total,
+                                              status: estimate.status,
+                                              limitValidifyDate: estimate.limitValidityDate,
+                                              isArchive: estimate.isArchive))
+            }
+        }
+        
+        return estimatesSummary
     }
 }

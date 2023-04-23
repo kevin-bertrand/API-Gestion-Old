@@ -89,4 +89,9 @@ extension Estimate {
         let hasTva: Bool
         let hasSiret: Bool
     }
+    
+    struct Getting: Codable {
+        let startDate: String?
+        let endDate: String?
+    }
 }
