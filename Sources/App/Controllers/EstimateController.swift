@@ -18,7 +18,7 @@ struct EstimateController: RouteCollection {
         
         let tokenGroup = estimateGroup.grouped(UserToken.authenticator()).grouped(UserToken.guardMiddleware())
         tokenGroup.get("reference", use: getEstimateReference)
-        tokenGroup.get("list", use: getList)
+        tokenGroup.post("list", use: getList)
         tokenGroup.get("list", ":filter", use: getList)
         tokenGroup.get(":id", use: getEstimate)
         tokenGroup.get("pdf", ":id", use: pdf)
