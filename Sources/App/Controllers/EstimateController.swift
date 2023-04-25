@@ -24,6 +24,7 @@ struct EstimateController: RouteCollection {
         tokenGroup.get("pdf", ":id", use: pdf)
         tokenGroup.post(use: create)
         tokenGroup.patch(use: update)
+        tokenGroup.patch("status", ":reference", ":status", use: updateStatus)
         tokenGroup.post("toInvoice", ":reference", use: exportToInvoice)
     }
     
@@ -237,6 +238,25 @@ struct EstimateController: RouteCollection {
                                                          products: products)
         
         return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(data: try JSONEncoder().encode(estimateInformations)))
+    }
+    
+    /// Update status of an estimate
+    private func updateStatus(req: Request) async throws -> Response {
+        let status = req.parameters.get("status", as: String.self)
+        let reference = req.parameters.get("reference")
+        
+        guard let status,
+              let reference,
+              let status = EstimateStatus(rawValue: status) else {
+            throw Abort(.notAcceptable)
+        }
+        
+        try await Estimate.query(on: req.db)
+            .filter(\.$reference == reference)
+            .set(\.$status, to: status)
+            .update()
+        
+        return GlobalFunctions.shared.formatResponse(status: .ok, body: .empty)
     }
     
     /// Export estimate to invoice
