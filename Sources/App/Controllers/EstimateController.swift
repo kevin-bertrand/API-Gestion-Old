@@ -434,7 +434,7 @@ struct EstimateController: RouteCollection {
         let materialsProducts = getPdfProductList(products, for: .material)
         let servicesProducts = getPdfProductList(products, for: .service)
         let diversProducts = getPdfProductList(products, for: .divers)
-        
+        print("OK 4")
         let page = req.view.render("estimate", Estimate.PDF(creationDate: Date().dateOnly,
                                                             reference: estimate.reference,
                                                             clientName: clientName,
@@ -456,7 +456,7 @@ struct EstimateController: RouteCollection {
                                                             siret: client.siret ?? "",
                                                             hasTva: client.tva != nil,
                                                             hasSiret: client.siret != nil))
-        
+        print("OK 3")
         let pages = try [page]
             .flatten(on: req.eventLoop)
             .map({ views in
@@ -464,10 +464,10 @@ struct EstimateController: RouteCollection {
                     Page(view.data)
                 }
             }).wait()
-        
+        print("Ok")
         document.pages = pages
         let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop, title: estimate.reference)
-        
+        print("OK 2")
         try await req.fileio.writeFile(ByteBuffer(data: pdf), at: "\(req.application.directory.publicDirectory)\(estimate.reference).pdf")
     }
     
