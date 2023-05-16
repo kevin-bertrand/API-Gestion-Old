@@ -6,13 +6,26 @@ import JWTKit
 import Leaf
 import Vapor
 
+class Configuration {
+    static var serverHostname = ""
+    static var serverPort = 0
+}
+
 // configures your application
 public func configure(_ app: Application) throws {
     /// config max upload file size
     app.routes.defaultMaxBodySize = "10mb"
     
     // Configure DB
-    if app.environment == .production {
+    if app.environment == .testing {
+        app.databases.use(.postgres(
+            hostname: Environment.get("DATABASE_HOST") ?? "localhost",
+            port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? PostgresConfiguration.ianaPortNumber,
+            username: Environment.get("DATABASE_USERNAME") ?? "vapor_username",
+            password: Environment.get("DATABASE_PASSWORD") ?? "vapor_password",
+            database: Environment.get("DATABASE_DEV_NAME") ?? "vapor_database"
+        ), as: .psql)
+    } else if app.environment == .production {
         app.databases.use(.postgres(
             hostname: Environment.get("DATABASE_HOST") ?? "localhost",
             port: Environment.get("DATABASE_PORT").flatMap(Int.init(_:)) ?? PostgresConfiguration.ianaPortNumber,
@@ -37,8 +50,14 @@ public func configure(_ app: Application) throws {
 //                                       topic: "com.desyntic.ios.Gestion",
 //                                       environment: .sandbox)
     // Server configuration
-    app.http.server.configuration.hostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
-    app.http.server.configuration.port = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
+    if app.environment == .testing {
+        Configuration.serverPort = Environment.get("SERVER_DEV_PORT").flatMap(Int.init(_:)) ?? 8080
+    } else {
+        Configuration.serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
+    }
+    Configuration.serverHostname = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
+    app.http.server.configuration.hostname = Configuration.serverHostname
+    app.http.server.configuration.port = Configuration.serverPort
     
     // Migrations
     app.migrations.add(EnumerationsMigration())

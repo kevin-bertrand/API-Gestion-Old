@@ -197,7 +197,7 @@ struct StaffController: RouteCollection {
         
         guard let userId = userAuth.id else { throw Abort(.unauthorized) }
         
-        let path = "/var/www/html/Gestion/Public/\(userId).\(fileExtension)"
+        let path = "/var/www/API-Gestion/Public/\(userId).\(fileExtension)"
         try await req.fileio.writeFile(file.data, at: path)
         
         try await Staff.query(on: req.db)
@@ -230,7 +230,7 @@ struct StaffController: RouteCollection {
             throw Abort(.notAcceptable)
         }
         
-        let downloadedImage = try await req.fileio.collectFile(at: "/var/www/html/Gestion/Public/\(image).\(imageExtension)")
+        let downloadedImage = try await req.fileio.collectFile(at: "/var/www/API-Gestion/Public/\(image).\(imageExtension)")
         
         return GlobalFunctions.shared.formatResponse(status: .ok, body: .init(buffer: downloadedImage))
     }

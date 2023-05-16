@@ -262,8 +262,6 @@ struct EstimateController: RouteCollection {
     /// Export estimate to invoice
     private func exportToInvoice(req: Request) async throws -> Response {
         let estimateRef = req.parameters.get("reference")
-        let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
-        let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
         
         guard let estimateRef = estimateRef,
               let estimate = try await Estimate.query(on: req.db).filter(\.$reference == estimateRef).first(),
@@ -272,7 +270,7 @@ struct EstimateController: RouteCollection {
             throw Abort(.notFound)
         }
         
-        let invoiceRefResponse = try await req.client.get("http://\(serverIP):\(serverPort)/invoice/reference", headers: req.headers)
+        let invoiceRefResponse = try await req.client.get("http://\(Configuration.serverHostname):\(Configuration.serverPort)/invoice/reference", headers: req.headers)
         
         guard var invoiceRef = invoiceRefResponse.body, let data = invoiceRef.readData(length: invoiceRef.readableBytes) else {
             throw Abort(.internalServerError)
@@ -309,7 +307,7 @@ struct EstimateController: RouteCollection {
                                         limitMaximumInterests: nil,
                                         maxInterests: nil)
         
-        let addInvoiceResponse = try await req.client.post("http://\(serverIP):\(serverPort)/invoice",
+        let addInvoiceResponse = try await req.client.post("http://\(Configuration.serverHostname):\(Configuration.serverPort)/invoice",
                                                            headers: req.headers,
                                                            content: newInvoice)
         
@@ -336,7 +334,7 @@ struct EstimateController: RouteCollection {
         
         for _ in 0..<3 {
             do {
-                file = try await req.fileio.collectFile(at: "/home/vapor/Gestion-server/Public/\(estimate.reference).pdf")
+                file = try await req.fileio.collectFile(at: "/home/vapor-usr/API-Gestion/Public/\(estimate.reference).pdf")
                 return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(buffer: file))
             } catch {
                 try await saveAsPDF(on: req, id: id)
@@ -470,7 +468,7 @@ struct EstimateController: RouteCollection {
         document.pages = pages
         let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop, title: estimate.reference)
                 
-        try await req.fileio.writeFile(ByteBuffer(data: pdf), at: "/home/vapor/Gestion-server/Public/\(estimate.reference).pdf")
+        try await req.fileio.writeFile(ByteBuffer(data: pdf), at: "/home/vapor-usr/API-Gestion/Public/\(estimate.reference).pdf")
     }
     
     /// Format estimate summary

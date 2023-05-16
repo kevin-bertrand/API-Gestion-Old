@@ -261,8 +261,6 @@ struct InvoiceController: RouteCollection {
     /// Getting invoice
     private func getInvoice(req: Request) async throws -> Response {
         let id = req.parameters.get("id", as: UUID.self)
-        let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
-        let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
 
         guard let id,
               let invoice = try await Invoice.find(id, on: req.db),
@@ -289,7 +287,7 @@ struct InvoiceController: RouteCollection {
         let payment: PayementMethod?
         
         if let paymentID = invoice.$payment.id {
-            let paymentResponse = try await req.client.get("http://\(serverIP):\(serverPort)/payment/\(paymentID)", headers: req.headers)
+            let paymentResponse = try await req.client.get("http://\(Configuration.serverHostname):\(Configuration.serverPort)/payment/\(paymentID)", headers: req.headers)
             
             guard var paymentData = paymentResponse.body, let data = paymentData.readData(length: paymentData.readableBytes) else {
                 throw Abort(.internalServerError)
@@ -346,7 +344,7 @@ struct InvoiceController: RouteCollection {
         
         for _ in 0..<3 {
             do {
-                file = try await req.fileio.collectFile(at: "/home/vapor/Gestion-server/Public/\(reference).pdf")
+                file = try await req.fileio.collectFile(at: "/home/vapor-usr/API-Gestion/Public/\(reference).pdf")
                 return Response(status: .ok, headers: HTTPHeaders([("Content-Type", "application/pdf")]), body: .init(buffer: file))
             } catch {
                 try await saveAsPDF(on: req, reference: reference)
@@ -658,9 +656,6 @@ struct InvoiceController: RouteCollection {
     private func saveAsPDF(on req: Request, reference: String) async throws {
         let document = Document(margins: 15)
         
-        let serverIP = Environment.get("SERVER_HOSTNAME") ?? "127.0.0.1"
-        let serverPort = Environment.get("SERVER_PORT").flatMap(Int.init(_:)) ?? 8080
-        
         guard let invoice = try await Invoice.query(on: req.db).filter(\.$reference == reference).first(),
               let id = invoice.id,
               let client = try await Client.find(invoice.$client.id, on: req.db),
@@ -688,7 +683,7 @@ struct InvoiceController: RouteCollection {
         let payment: PayementMethod?
         
         if let paymentID = invoice.$payment.id {
-            let paymentResponse = try await req.client.get("http://\(serverIP):\(serverPort)/payment/\(paymentID)", headers: req.headers)
+            let paymentResponse = try await req.client.get("http://\(Configuration.serverHostname):\(Configuration.serverPort)/payment/\(paymentID)", headers: req.headers)
             
             guard var paymentData = paymentResponse.body, let data = paymentData.readData(length: paymentData.readableBytes) else {
                 throw Abort(.internalServerError)
@@ -780,7 +775,7 @@ struct InvoiceController: RouteCollection {
         document.pages = pages
         let pdf = try await document.generatePDF(on: req.application.threadPool, eventLoop: req.eventLoop, title: invoice.reference)
         
-        try await req.fileio.writeFile(ByteBuffer(data: pdf), at: "/home/vapor/Gestion-server/Public/\(reference).pdf")
+        try await req.fileio.writeFile(ByteBuffer(data: pdf), at: "/home/vapor-usr/API-Gestion/Public/\(reference).pdf")
     }
 }
 
