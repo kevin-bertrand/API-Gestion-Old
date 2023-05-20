@@ -9,14 +9,30 @@ import Fluent
 import Vapor
 
 struct DefaultAdministratorMigration: AsyncMigration {
+    // MARK: Properties
+    let environment: Environment
+    
+    // MARK: Initialization
+    init(environment: Environment) {
+        self.environment = environment
+    }
+    
+    // MARK: Methods
     // Create DB
     func prepare(on database: Database) async throws {
+        let password = {
+            if environment == .testing {
+                return Environment.get("ADMINISTRATOR_DEV_PASSWORD")
+            } else {
+                return Environment.get("ADMINISTRATOR_PASSWORD")
+            }
+        }()
+        
         let firstname = Environment.get("ADMINISTRATOR_FIRSTNAME")
         let lastname = Environment.get("ADMINISTRATOR_LASTNAME")
         let phone = Environment.get("ADMINISTRATOR_PHONE")
         let email = Environment.get("ADMINISTRATOR_EMAIL")
         let role = Environment.get("ADMINISTRATOR_ROLE")
-        let password = Environment.get("ADMINISTRATOR_PASSWORD")
         
         let streetNumber = Environment.get("ADMINISTRATOR_ADDRESS_NUMBER")
         let roadName = Environment.get("ADMINISTRATOR_ADDRESS_NAME")

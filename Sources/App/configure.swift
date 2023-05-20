@@ -76,7 +76,7 @@ public func configure(_ app: Application) throws {
     app.migrations.add(SiblingsMigration())
     
     // Add default administrator user
-    app.migrations.add(DefaultAdministratorMigration())
+    app.migrations.add(DefaultAdministratorMigration(environment: app.environment))
         
     // register routes
     try routes(app)
